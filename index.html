@@ -3,155 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Cal Tracker">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#f5f5f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
 <title>Cal Tracker</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  :root {
-    --bg:#f5f5f3;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,0.1);
-    --text:#1a1a18;--muted:#6b6b66;--hint:#a0a09a;
-    --blue:#3266ad;--blue-bg:#e6f1fb;--blue-text:#0c447c;
-    --green:#3b6d11;--green-bg:#eaf3de;
-    --red:#a32d2d;--red-bg:#fcebeb;
-    --amber:#854f0b;--amber-bg:#faeeda;
-    --radius-md:8px;--radius-lg:12px;--radius-xl:16px;
-  }
-  @media(prefers-color-scheme:dark){:root{
-    --bg:#1a1a18;--surface:#242422;--surface2:#2c2c2a;--border:rgba(255,255,255,0.1);
-    --text:#e8e8e4;--muted:#a0a09a;--hint:#6b6b66;
-    --blue:#6da0e8;--blue-bg:#042c53;--blue-text:#b5d4f4;
-    --green:#97c459;--green-bg:#173404;
-    --red:#f09595;--red-bg:#501313;
-    --amber:#fac775;--amber-bg:#412402;
-  }}
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
-  .screen{display:none;flex:1;overflow-y:auto;padding:16px 16px 88px}
-  .screen.active{display:block}
-
-  /* Nav */
-  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--surface);border-top:0.5px solid var(--border);padding:6px 0 max(8px,env(safe-area-inset-bottom));z-index:100}
-  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;cursor:pointer;padding:4px 0;color:var(--hint);font-size:10px;font-family:inherit}
-  .nav-btn.active{color:var(--blue)}
-  .nav-btn i{font-size:22px}
-
-  .page-header{margin-bottom:20px}
-  .page-header h1{font-size:22px;font-weight:600;color:var(--text)}
-  .page-header p{font-size:13px;color:var(--muted);margin-top:2px}
-
-  .ring-wrap{display:flex;justify-content:center;margin-bottom:20px}
-
-  .metric-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:20px}
-  .metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px}
-  .metric .lbl{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:4px}
-  .metric .val{font-size:24px;font-weight:600;color:var(--text);line-height:1}
-  .metric .sub{font-size:11px;color:var(--hint);margin-top:4px}
-
-  .section-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:4px}
-
-  /* Timer state colors */
-  .timer-ok{color:var(--green)!important}
-  .timer-wait{color:var(--amber)!important}
-
-  /* Meal cards */
-  .meal-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;transition:background 0.15s}
-  .meal-card:active{background:var(--surface2)}
-  .meal-card-left{flex:1;min-width:0}
-  .meal-name{font-size:15px;font-weight:500;color:var(--text)}
-  .meal-items-list{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
-  .meal-time{font-size:12px;color:var(--hint);margin-top:3px}
-  .meal-right{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px}
-  .meal-cal{font-size:18px;font-weight:600;color:var(--blue)}
-  .del-btn{background:none;border:none;cursor:pointer;color:var(--hint);font-size:18px;padding:4px;display:flex;align-items:center}
-  .copy-hint{font-size:10px;color:var(--hint);text-align:right;margin-top:2px}
-  .empty-state{text-align:center;color:var(--hint);font-size:14px;padding:24px 0}
-
-  .add-btn{width:100%;padding:13px;border:0.5px dashed var(--border);border-radius:var(--radius-lg);background:none;color:var(--muted);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
-  .add-btn:active{background:var(--surface2)}
-
-  .prog-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin:6px 0 16px}
-  .prog-fill{height:100%;background:var(--blue);border-radius:4px;transition:width 0.4s}
-
-  .wt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);font-size:14px}
-  .wt-row:last-child{border-bottom:none}
-  .diff-pill{font-size:12px;padding:3px 9px;border-radius:20px;font-weight:500}
-  .diff-down{background:var(--green-bg);color:var(--green)}
-  .diff-up{background:var(--red-bg);color:var(--red)}
-  .diff-same{background:var(--surface2);color:var(--muted)}
-
-  .streak-badge{display:inline-flex;align-items:center;gap:6px;background:var(--amber-bg);color:var(--amber);border-radius:20px;padding:5px 14px;font-size:14px;font-weight:600;margin-bottom:16px}
-  .on-track-yes{color:var(--green);font-weight:600}
-  .on-track-no{color:var(--red);font-weight:600}
-
-  /* History tab */
-  .hist-day{margin-bottom:20px}
-  .hist-day-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
-  .hist-day-label{font-size:14px;font-weight:600;color:var(--text)}
-  .hist-day-cal{font-size:13px;color:var(--muted)}
-  .hist-meal-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:0.5px solid var(--border);cursor:pointer}
-  .hist-meal-row:last-child{border-bottom:none}
-  .hist-meal-row:active{opacity:0.6}
-  .hist-meal-name{font-size:14px;font-weight:500;color:var(--text)}
-  .hist-meal-items{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
-  .hist-meal-time{font-size:11px;color:var(--hint);margin-top:2px}
-  .hist-meal-cal{font-size:15px;font-weight:600;color:var(--blue);flex-shrink:0;margin-left:12px;padding-top:2px}
-  .hist-copy-hint{font-size:10px;color:var(--hint);margin-top:2px;text-align:right}
-  .cal-pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
-  .cal-ok{background:var(--green-bg);color:var(--green)}
-  .cal-warn{background:var(--amber-bg);color:var(--amber)}
-  .cal-over{background:var(--red-bg);color:var(--red)}
-
-  /* Overlays */
-  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
-  .overlay.open{display:flex}
-  .sheet{background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));width:100%;max-width:430px;max-height:90dvh;overflow-y:auto}
-  .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
-  .sheet h3{font-size:17px;font-weight:600;margin-bottom:4px;color:var(--text)}
-  .sheet-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
-  .field{margin-bottom:12px}
-  .field label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
-  .field input{width:100%;padding:11px 13px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);color:var(--text);font-size:16px;font-family:inherit;outline:none}
-  .field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(50,102,173,0.15)}
-  .field-err{font-size:12px;color:var(--red);margin-top:4px;display:none}
-
-  .food-item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  .food-del{background:none;border:none;cursor:pointer;color:var(--hint);font-size:20px;padding:4px;display:flex;align-items:center;flex-shrink:0}
-  .meal-total-bar{background:var(--surface2);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
-  .meal-total-label{font-size:13px;color:var(--muted)}
-  .meal-total-num{font-size:20px;font-weight:700}
-  .meal-total-num.ok{color:var(--blue)}
-  .meal-total-num.warn{color:var(--amber)}
-  .meal-total-num.over{color:var(--red)}
-  .meal-total-sub{font-size:11px;color:var(--hint);margin-top:2px;text-align:right}
-  .sheet-actions{display:flex;gap:10px;margin-top:4px}
-  .btn-cancel{flex:1;padding:12px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:none;color:var(--text);font-size:15px;font-family:inherit;cursor:pointer}
-  .btn-save{flex:2;padding:12px;border:none;border-radius:var(--radius-md);background:var(--blue);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
-  .btn-save:disabled{opacity:0.4;cursor:not-allowed}
-  .btn-save:not(:disabled):active{opacity:0.85}
-  .add-food-btn{width:100%;padding:10px;border:0.5px dashed var(--border);border-radius:var(--radius-md);background:none;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:14px}
-  .add-food-btn:active{background:var(--surface2)}
-
-  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:300;white-space:nowrap}
-  .toast.show{opacity:1}
-  .chart-wrap{position:relative;width:100%;margin-bottom:20px}
+:root{--bg:#f5f5f3;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,0.1);--text:#1a1a18;--muted:#6b6b66;--hint:#a0a09a;--blue:#3266ad;--green:#3b6d11;--green-bg:#eaf3de;--red:#a32d2d;--red-bg:#fcebeb;--amber:#854f0b;--amber-bg:#faeeda;--r-md:8px;--r-lg:12px;--r-xl:16px}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--surface:#242422;--surface2:#2c2c2a;--border:rgba(255,255,255,0.1);--text:#e8e8e4;--muted:#a0a09a;--hint:#6b6b66;--blue:#6da0e8;--green:#97c459;--green-bg:#173404;--red:#f09595;--red-bg:#501313;--amber:#fac775;--amber-bg:#412402}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+.screen{display:none;padding:16px 16px 88px}.screen.active{display:block}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--surface);border-top:0.5px solid var(--border);padding:6px 0 max(8px,env(safe-area-inset-bottom));z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;cursor:pointer;padding:4px 0;color:var(--hint);font-size:10px;font-family:inherit}
+.nav-btn.active{color:var(--blue)}.nav-btn i{font-size:22px}
+.page-header{margin-bottom:20px}.page-header h1{font-size:22px;font-weight:600}.page-header p{font-size:13px;color:var(--muted);margin-top:2px}
+.ring-wrap{display:flex;justify-content:center;margin-bottom:20px}
+.metric-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:14px}
+.metric .lbl{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.metric .val{font-size:24px;font-weight:600;line-height:1}.metric .sub{font-size:11px;color:var(--hint);margin-top:4px}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:4px}
+.timer-ok{color:var(--green)!important}.timer-wait{color:var(--amber)!important}
+.meal-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer}
+.meal-card:active{background:var(--surface2)}.meal-card-left{flex:1;min-width:0}
+.meal-name{font-size:15px;font-weight:500}.meal-items-list{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.meal-time{font-size:12px;color:var(--hint);margin-top:3px}
+.meal-right{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px}
+.meal-cal{font-size:18px;font-weight:600;color:var(--blue)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--hint);font-size:18px;padding:4px;display:flex;align-items:center}
+.copy-hint{font-size:10px;color:var(--hint);text-align:right;margin-top:2px}
+.empty-state{text-align:center;color:var(--hint);font-size:14px;padding:24px 0}
+.add-btn{width:100%;padding:13px;border:0.5px dashed var(--border);border-radius:var(--r-lg);background:none;color:var(--muted);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.add-btn:active{background:var(--surface2)}
+.prog-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin:6px 0 16px}
+.prog-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .4s}
+.wt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);font-size:14px}
+.wt-row:last-child{border-bottom:none}
+.diff-pill{font-size:12px;padding:3px 9px;border-radius:20px;font-weight:500}
+.diff-down{background:var(--green-bg);color:var(--green)}.diff-up{background:var(--red-bg);color:var(--red)}.diff-same{background:var(--surface2);color:var(--muted)}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:var(--amber-bg);color:var(--amber);border-radius:20px;padding:5px 14px;font-size:14px;font-weight:600;margin-bottom:16px}
+.on-track-yes{color:var(--green);font-weight:600}.on-track-no{color:var(--red);font-weight:600}
+.hist-day{margin-bottom:20px}
+.hist-day-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--border)}
+.hist-day-label{font-size:14px;font-weight:600}
+.hist-meal-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:0.5px solid var(--border);cursor:pointer}
+.hist-meal-row:last-child{border-bottom:none}.hist-meal-row:active{opacity:.6}
+.hist-meal-name{font-size:14px;font-weight:500}.hist-meal-items{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+.hist-meal-time{font-size:11px;color:var(--hint);margin-top:2px}
+.hist-meal-cal{font-size:15px;font-weight:600;color:var(--blue);flex-shrink:0;margin-left:12px;padding-top:2px}
+.hist-copy-hint{font-size:10px;color:var(--hint);margin-top:2px;text-align:right}
+.cal-pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.cal-ok{background:var(--green-bg);color:var(--green)}.cal-warn{background:var(--amber-bg);color:var(--amber)}.cal-over{background:var(--red-bg);color:var(--red)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));width:100%;max-width:430px;max-height:90dvh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet h3{font-size:17px;font-weight:600;margin-bottom:4px}.sheet-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.field{margin-bottom:12px}.field label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+.field input{width:100%;padding:11px 13px;border:0.5px solid var(--border);border-radius:var(--r-md);background:var(--surface2);color:var(--text);font-size:16px;font-family:inherit;outline:none}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(50,102,173,.15)}
+.field-err{font-size:12px;color:var(--red);margin-top:4px;display:none}
+.food-item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.food-name-input,.food-cal-input{padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--r-md);background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit;outline:none}
+.food-name-input{flex:1}.food-cal-input{width:76px;text-align:right}
+.food-del{background:none;border:none;cursor:pointer;color:var(--hint);font-size:20px;padding:4px;display:flex;align-items:center;flex-shrink:0}
+.meal-total-bar{background:var(--surface2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.meal-total-label{font-size:13px;color:var(--muted)}.meal-total-num{font-size:20px;font-weight:700}
+.meal-total-num.ok{color:var(--blue)}.meal-total-num.warn{color:var(--amber)}.meal-total-num.over{color:var(--red)}
+.meal-total-sub{font-size:11px;color:var(--hint);margin-top:2px;text-align:right}
+.sheet-actions{display:flex;gap:10px;margin-top:4px}
+.btn-cancel{flex:1;padding:12px;border:0.5px solid var(--border);border-radius:var(--r-md);background:none;color:var(--text);font-size:15px;font-family:inherit;cursor:pointer}
+.btn-save{flex:2;padding:12px;border:none;border-radius:var(--r-md);background:var(--blue);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
+.btn-save:disabled{opacity:.4;cursor:not-allowed}.btn-save:not(:disabled):active{opacity:.85}
+.add-food-btn{width:100%;padding:10px;border:0.5px dashed var(--border);border-radius:var(--r-md);background:none;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:14px}
+.add-food-btn:active{background:var(--surface2)}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1}
+.chart-wrap{position:relative;width:100%;margin-bottom:20px}
 </style>
 </head>
 <body>
-<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Calorie and weight tracker</h2>
 
 <!-- TODAY -->
 <div id="screen-today" class="screen active">
   <div class="page-header"><h1>Today</h1><p id="todayDate"></p></div>
   <div class="ring-wrap">
-    <svg width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="Daily calorie ring">
+    <svg width="170" height="170" viewBox="0 0 170 170">
       <circle cx="85" cy="85" r="72" fill="none" stroke-width="14" stroke="var(--surface2)"/>
-      <circle id="ringFill" cx="85" cy="85" r="72" fill="none" stroke-width="14" stroke="var(--blue)" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452" transform="rotate(-90 85 85)" style="transition:stroke-dashoffset 0.5s,stroke 0.3s"/>
+      <circle id="ringFill" cx="85" cy="85" r="72" fill="none" stroke-width="14" stroke="var(--blue)" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452" transform="rotate(-90 85 85)" style="transition:stroke-dashoffset .5s,stroke .3s"/>
       <text x="85" y="77" text-anchor="middle" font-size="30" font-weight="700" fill="var(--text)" id="ringCal">0</text>
       <text x="85" y="97" text-anchor="middle" font-size="13" fill="var(--muted)">of 1,950 cal</text>
       <text x="85" y="115" text-anchor="middle" font-size="12" fill="var(--hint)" id="ringLeft">1,950 remaining</text>
@@ -163,16 +100,15 @@
       <div class="val" id="mealCount">0</div>
       <div class="sub">550 cal max each</div>
     </div>
-    <div class="metric" id="timerCard" onclick="timerCardTapped()" style="cursor:pointer;user-select:none">
+    <div class="metric">
       <div class="lbl"><i class="ti ti-clock" style="font-size:14px"></i> Next meal</div>
       <div class="val timer-ok" id="nextTime" style="font-size:17px">Now</div>
       <div class="sub" id="nextTimeSub">ready to eat</div>
-      <div id="notifHint" style="font-size:10px;color:var(--blue);margin-top:5px;display:none"><i class="ti ti-bell" style="font-size:11px"></i> tap to set reminder</div>
     </div>
   </div>
   <div class="section-label">Meals logged — tap to copy</div>
   <div id="mealList"></div>
-  <button class="add-btn" onclick="openMealSheet()"><i class="ti ti-plus"></i> Log a meal</button>
+  <button class="add-btn" id="btnAddMeal"><i class="ti ti-plus"></i> Log a meal</button>
 </div>
 
 <!-- HISTORY -->
@@ -184,12 +120,12 @@
 <!-- WEIGHT -->
 <div id="screen-weight" class="screen">
   <div class="page-header"><h1>Weight</h1><p>250 lbs → 215 lbs goal</p></div>
-  <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+  <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px">
     <span>Start: 250</span><span id="wtLostLabel">0 lbs lost</span><span>Goal: 215</span>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="wtProgress" style="width:0%"></div></div>
-  <div class="chart-wrap" style="height:190px;"><canvas id="wtChart" role="img" aria-label="Weight trend">Weight over time</canvas></div>
-  <button class="add-btn" onclick="openWtSheet()" style="margin-bottom:20px"><i class="ti ti-plus"></i> Log weight</button>
+  <div class="chart-wrap" style="height:190px"><canvas id="wtChart"></canvas></div>
+  <button class="add-btn" id="btnAddWeight" style="margin-bottom:20px"><i class="ti ti-plus"></i> Log weight</button>
   <div class="section-label">History</div>
   <div id="wtList"></div>
 </div>
@@ -207,25 +143,25 @@
     <div class="metric"><div class="lbl">On track</div><div class="val" id="onTrack">—</div><div class="sub">2.9 lbs/week pace</div></div>
   </div>
   <div class="section-label">Weekly calories</div>
-  <div class="chart-wrap" style="height:180px;"><canvas id="wkChart" role="img" aria-label="Weekly calories">Weekly calories</canvas></div>
+  <div class="chart-wrap" style="height:180px"><canvas id="wkChart"></canvas></div>
 </div>
 
 <!-- NAV -->
 <nav class="nav">
-  <button class="nav-btn active" onclick="showScreen('today',this)"><i class="ti ti-sun"></i>Today</button>
-  <button class="nav-btn" onclick="showScreen('history',this)"><i class="ti ti-calendar"></i>History</button>
-  <button class="nav-btn" onclick="showScreen('weight',this)"><i class="ti ti-scale"></i>Weight</button>
-  <button class="nav-btn" onclick="showScreen('progress',this)"><i class="ti ti-chart-bar"></i>Progress</button>
+  <button class="nav-btn active" data-screen="today"><i class="ti ti-sun"></i>Today</button>
+  <button class="nav-btn" data-screen="history"><i class="ti ti-calendar"></i>History</button>
+  <button class="nav-btn" data-screen="weight"><i class="ti ti-scale"></i>Weight</button>
+  <button class="nav-btn" data-screen="progress"><i class="ti ti-chart-bar"></i>Progress</button>
 </nav>
 
 <!-- MEAL SHEET -->
-<div class="overlay" id="mealOverlay" onclick="overlayClickMeal(event)">
+<div class="overlay" id="mealOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h3 id="sheetTitle">Log a meal</h3>
     <p class="sheet-sub">Add each food item separately</p>
     <div id="foodItems"></div>
-    <button class="add-food-btn" onclick="addFoodRow()"><i class="ti ti-plus"></i> Add food item</button>
+    <button class="add-food-btn" id="btnAddFood"><i class="ti ti-plus"></i> Add food item</button>
     <div class="meal-total-bar">
       <div><div class="meal-total-label">Meal total</div><div class="meal-total-sub" id="totalSub">550 cal max</div></div>
       <div class="meal-total-num ok" id="mealTotalNum">0</div>
@@ -233,22 +169,22 @@
     <div class="field-err" id="mealErr" style="margin-bottom:10px">Add at least one food item with calories</div>
     <div class="field-err" id="mealOverErr" style="margin-bottom:10px">Total exceeds 550 cal limit</div>
     <div class="sheet-actions">
-      <button class="btn-cancel" onclick="closeMealSheet()">Cancel</button>
-      <button class="btn-save" id="saveMealBtn" onclick="saveMeal()">Save meal</button>
+      <button class="btn-cancel" id="btnCancelMeal">Cancel</button>
+      <button class="btn-save" id="saveMealBtn">Save meal</button>
     </div>
   </div>
 </div>
 
 <!-- WEIGHT SHEET -->
-<div class="overlay" id="wtOverlay" onclick="overlayClickWt(event)">
+<div class="overlay" id="wtOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h3>Log weight</h3>
     <div class="field"><label>Weight (lbs)</label><input type="number" id="wtInput" placeholder="e.g. 247.5" step="0.1" inputmode="decimal"/></div>
     <div class="field"><label>Date</label><input type="date" id="wtDate"/></div>
     <div class="sheet-actions">
-      <button class="btn-cancel" onclick="closeWtSheet()">Cancel</button>
-      <button class="btn-save" onclick="saveWeight()">Save</button>
+      <button class="btn-cancel" id="btnCancelWt">Cancel</button>
+      <button class="btn-save" id="btnSaveWt">Save</button>
     </div>
   </div>
 </div>
@@ -257,6 +193,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+
 const TODAY = new Date().toISOString().split('T')[0];
 let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null;
 
@@ -271,7 +209,9 @@ document.getElementById('todayDate').textContent=new Date().toLocaleDateString([
 
 function todayMeals(){return S.meals[TODAY]||[];}
 function totalCalToday(){return todayMeals().reduce((a,m)=>a+m.cal,0);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// ---- Ring ----
 function updateRing(){
   const total=totalCalToday();
   const ring=document.getElementById('ringFill');
@@ -282,94 +222,65 @@ function updateRing(){
   document.getElementById('mealCount').textContent=todayMeals().length;
 }
 
-// ---- TIMER (fixed) ----
-// Meals now store a numeric `ts` (epoch ms) set at save time.
-// All timer math is done on numbers — no locale string parsing.
-
-function getLastMealTs(){
-  const meals=todayMeals();
-  if(!meals.length) return null;
-  const last=meals[meals.length-1];
-  return last.ts||null; // ts added in saveMeal; old entries without ts fall back to null
-}
+// ---- Timer ----
+function getLastMealTs(){const meals=todayMeals();return meals.length?meals[meals.length-1].ts||null:null;}
 
 function updateNextMeal(){
   const el=document.getElementById('nextTime');
   const subEl=document.getElementById('nextTimeSub');
   clearInterval(timerInterval);
-
   const lastTs=getLastMealTs();
-  if(!lastTs){
-    el.textContent='Now';
-    el.className='val timer-ok';
-    subEl.textContent='ready to eat';
-    return;
-  }
-
+  if(!lastTs){el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';return;}
   function tick(){
     const msLeft=(lastTs+3*60*60*1000)-Date.now();
     if(msLeft<=0){
       clearInterval(timerInterval);
-      el.textContent='Now';
-      el.className='val timer-ok';
-      subEl.textContent='ready to eat';
-      updateNotifHint(false);
+      el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';
     } else {
-      const totalSec=Math.ceil(msLeft/1000);
-      const h=Math.floor(totalSec/3600);
-      const m=Math.floor((totalSec%3600)/60);
-      const s=totalSec%60;
-      el.textContent=h>0?`${h}h ${m}m`:`${m}m ${String(s).padStart(2,'0')}s`;
+      const s=Math.ceil(msLeft/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+      el.textContent=h>0?h+'h '+m+'m':m+'m '+String(sec).padStart(2,'0')+'s';
       el.className='val timer-wait';
-      const readyAt=new Date(lastTs+3*60*60*1000);
-      subEl.textContent='ok at '+readyAt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      updateNotifHint(true);
+      subEl.textContent='ok at '+new Date(lastTs+3*60*60*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     }
   }
   tick();
   timerInterval=setInterval(tick,1000);
 }
 
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-function mealCardHtml(m,i,copyFn){
-  const itemsHtml=m.items&&m.items.length>1?m.items.map(it=>`${escHtml(it.name)} <span style="color:var(--hint)">${it.cal}</span>`).join(' · '):'';
-  return `<div class="meal-card" onclick="${copyFn}(${i})">
-    <div class="meal-card-left">
-      <div class="meal-name">${escHtml(m.name)}</div>
-      ${itemsHtml?`<div class="meal-items-list">${itemsHtml}</div>`:''}
-      <div class="meal-time">${m.time}</div>
-    </div>
-    <div>
-      <div class="meal-right">
-        <div class="meal-cal">${m.cal}</div>
-        ${copyFn==='copyTodayMeal'?`<button class="del-btn" onclick="event.stopPropagation();deleteMeal(${i})" aria-label="Delete"><i class="ti ti-x"></i></button>`:''}
-      </div>
-      <div class="copy-hint">tap to copy</div>
-    </div>
-  </div>`;
-}
-
+// ---- Meals render ----
 function renderMeals(){
   const list=document.getElementById('mealList');
   const meals=todayMeals();
   if(!meals.length){list.innerHTML='<div class="empty-state"><i class="ti ti-bowl-chopsticks" style="font-size:32px;display:block;margin-bottom:8px"></i>No meals logged yet</div>';return;}
-  list.innerHTML=meals.map((m,i)=>mealCardHtml(m,i,'copyTodayMeal')).join('');
+  list.innerHTML=meals.map((m,i)=>{
+    const its=m.items&&m.items.length>1?m.items.map(it=>escHtml(it.name)+' <span style="color:var(--hint)">'+it.cal+'</span>').join(' · '):'';
+    return '<div class="meal-card" data-copy="'+i+'">'
+      +'<div class="meal-card-left"><div class="meal-name">'+escHtml(m.name)+'</div>'
+      +(its?'<div class="meal-items-list">'+its+'</div>':'')
+      +'<div class="meal-time">'+m.time+'</div></div>'
+      +'<div><div class="meal-right"><div class="meal-cal">'+m.cal+'</div>'
+      +'<button class="del-btn" data-del="'+i+'" aria-label="Delete"><i class="ti ti-x"></i></button></div>'
+      +'<div class="copy-hint">tap to copy</div></div></div>';
+  }).join('');
+
+  list.querySelectorAll('[data-copy]').forEach(el=>{
+    el.addEventListener('click',function(e){
+      if(e.target.closest('[data-del]')) return;
+      copyTodayMeal(parseInt(this.dataset.copy));
+    });
+  });
+  list.querySelectorAll('[data-del]').forEach(el=>{
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      deleteMeal(parseInt(this.dataset.del));
+    });
+  });
 }
 
-function deleteMeal(i){
-  S.meals[TODAY].splice(i,1);
-  saveState(S);updateRing();renderMeals();updateNextMeal();
-}
+function deleteMeal(i){S.meals[TODAY].splice(i,1);saveState(S);updateRing();renderMeals();updateNextMeal();}
+function copyTodayMeal(i){const m=todayMeals()[i];if(!m)return;openMealSheet(m);showToast('Meal copied — edit & save');}
 
-function copyTodayMeal(i){
-  const meal=todayMeals()[i];
-  if(!meal) return;
-  openMealSheet(meal);
-  showToast('Meal copied — edit & save');
-}
-
-// ---- History tab ----
+// ---- History ----
 function renderHistory(){
   const list=document.getElementById('histList');
   const days=Object.keys(S.meals).filter(d=>d!==TODAY&&S.meals[d]&&S.meals[d].length).sort((a,b)=>b.localeCompare(a));
@@ -377,40 +288,32 @@ function renderHistory(){
   list.innerHTML=days.map(date=>{
     const meals=S.meals[date];
     const dayTotal=meals.reduce((a,m)=>a+m.cal,0);
-    const calClass=dayTotal<=1950?'cal-ok':dayTotal<=2100?'cal-warn':'cal-over';
-    const dateLabel=new Date(date+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
-    const rows=meals.map((m,i)=>{
-      const itemsHtml=m.items&&m.items.length>1?m.items.map(it=>`${escHtml(it.name)} <span style="color:var(--hint)">${it.cal}</span>`).join(' · '):'';
-      return `<div class="hist-meal-row" onclick="copyHistMeal('${date}',${i})">
-        <div style="flex:1;min-width:0">
-          <div class="hist-meal-name">${escHtml(m.name)}</div>
-          ${itemsHtml?`<div class="hist-meal-items">${itemsHtml}</div>`:''}
-          <div class="hist-meal-time">${m.time}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          <div class="hist-meal-cal">${m.cal}</div>
-          <div class="hist-copy-hint">tap to copy</div>
-        </div>
-      </div>`;
-    }).join('');
-    return `<div class="hist-day">
-      <div class="hist-day-header">
-        <span class="hist-day-label">${dateLabel}</span>
-        <span class="cal-pill ${calClass}">${dayTotal} cal</span>
-      </div>
-      ${rows}
-    </div>`;
+    const cls=dayTotal<=1950?'cal-ok':dayTotal<=2100?'cal-warn':'cal-over';
+    const label=new Date(date+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+    return '<div class="hist-day">'
+      +'<div class="hist-day-header"><span class="hist-day-label">'+label+'</span><span class="cal-pill '+cls+'">'+dayTotal+' cal</span></div>'
+      +meals.map((m,i)=>{
+        const its=m.items&&m.items.length>1?m.items.map(it=>escHtml(it.name)+' <span style="color:var(--hint)">'+it.cal+'</span>').join(' · '):'';
+        return '<div class="hist-meal-row" data-hist-date="'+date+'" data-hist-idx="'+i+'">'
+          +'<div style="flex:1;min-width:0"><div class="hist-meal-name">'+escHtml(m.name)+'</div>'
+          +(its?'<div class="hist-meal-items">'+its+'</div>':'')
+          +'<div class="hist-meal-time">'+m.time+'</div></div>'
+          +'<div style="text-align:right;flex-shrink:0;margin-left:12px">'
+          +'<div class="hist-meal-cal">'+m.cal+'</div>'
+          +'<div class="hist-copy-hint">tap to copy</div></div></div>';
+      }).join('')
+      +'</div>';
   }).join('');
-}
 
-function copyHistMeal(date,i){
-  const meal=(S.meals[date]||[])[i];
-  if(!meal) return;
-  openMealSheet(meal);
-  showToast('Meal copied — edit & save');
-  // Switch to today tab
-  const todayBtn=document.querySelector('.nav-btn');
-  showScreen('today',todayBtn);
+  list.querySelectorAll('[data-hist-date]').forEach(el=>{
+    el.addEventListener('click',function(){
+      const meal=(S.meals[this.dataset.histDate]||[])[parseInt(this.dataset.histIdx)];
+      if(!meal) return;
+      openMealSheet(meal);
+      showToast('Meal copied — edit & save');
+      showScreen('today');
+    });
+  });
 }
 
 // ---- Meal sheet ----
@@ -427,42 +330,45 @@ function openMealSheet(prefill){
   setTimeout(()=>{const f=document.querySelector('.food-name-input');if(f)f.focus();},120);
 }
 function closeMealSheet(){document.getElementById('mealOverlay').classList.remove('open');}
-function overlayClickMeal(e){if(e.target.id==='mealOverlay')closeMealSheet();}
 
-function addFoodRow(name='',cal=''){
+function addFoodRow(name,cal){
+  name=name||''; cal=cal||'';
   const id=++foodRowCount;
   const div=document.createElement('div');
   div.className='food-item-row';div.id='foodRow'+id;
-  div.innerHTML=`
-    <input class="food-name-input" type="text" placeholder="Food name" value="${escHtml(String(name))}" oninput="updateMealTotal()"
-      style="flex:1;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit;outline:none;"/>
-    <input class="food-cal-input" type="number" placeholder="Cal" value="${cal||''}" min="1" inputmode="numeric" oninput="updateMealTotal()"
-      style="width:76px;padding:10px 10px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit;outline:none;text-align:right;"/>
-    <button class="food-del" onclick="removeFoodRow(${id})" aria-label="Remove"><i class="ti ti-x"></i></button>`;
+  div.innerHTML='<input class="food-name-input" type="text" placeholder="Food name" value="'+escHtml(String(name))+'"/>'
+    +'<input class="food-cal-input" type="number" placeholder="Cal" value="'+(cal||'')+'" min="1" inputmode="numeric"/>'
+    +'<button class="food-del" data-row="'+id+'" aria-label="Remove"><i class="ti ti-x"></i></button>';
   document.getElementById('foodItems').appendChild(div);
+  div.querySelector('.food-name-input').addEventListener('input',updateMealTotal);
+  div.querySelector('.food-cal-input').addEventListener('input',updateMealTotal);
+  div.querySelector('.food-del').addEventListener('click',function(){
+    const row=document.getElementById('foodRow'+this.dataset.row);
+    if(row) row.remove();
+    if(!document.querySelectorAll('.food-item-row').length) addFoodRow();
+    updateMealTotal();
+  });
 }
-function removeFoodRow(id){
-  const el=document.getElementById('foodRow'+id);if(el)el.remove();
-  if(document.querySelectorAll('.food-item-row').length===0)addFoodRow();
-  updateMealTotal();
-}
+
 function getFoodRows(){
   return Array.from(document.querySelectorAll('.food-item-row')).map(row=>({
-    name:row.querySelector('.food-name-input')?.value.trim()||'',
-    cal:parseInt(row.querySelector('.food-cal-input')?.value)||0
+    name:row.querySelector('.food-name-input').value.trim(),
+    cal:parseInt(row.querySelector('.food-cal-input').value)||0
   })).filter(r=>r.name||r.cal);
 }
+
 function updateMealTotal(){
   const total=getFoodRows().reduce((a,r)=>a+r.cal,0);
   const el=document.getElementById('mealTotalNum');
   el.textContent=total;
   el.className='meal-total-num '+(total>550?'over':total>450?'warn':'ok');
-  document.getElementById('totalSub').textContent=total>550?`${total-550} over limit`:`${550-total} remaining`;
+  document.getElementById('totalSub').textContent=total>550?(total-550)+' over limit':(550-total)+' remaining';
   document.getElementById('saveMealBtn').disabled=total>550||total===0;
 }
+
 function saveMeal(){
   const rows=getFoodRows().filter(r=>r.name&&r.cal>0);
-  document.getElementById('mealErr').style.display=rows.length===0?'block':'none';
+  document.getElementById('mealErr').style.display=!rows.length?'block':'none';
   if(!rows.length) return;
   const total=rows.reduce((a,r)=>a+r.cal,0);
   document.getElementById('mealOverErr').style.display=total>550?'block':'none';
@@ -470,8 +376,8 @@ function saveMeal(){
   if(!S.meals[TODAY])S.meals[TODAY]=[];
   const now=new Date();
   const time=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  const ts=now.getTime(); // ← epoch ms for reliable timer math
-  const name=rows.length===1?rows[0].name:rows[0].name+(rows.length>1?` +${rows.length-1}`:'');
+  const ts=now.getTime();
+  const name=rows.length===1?rows[0].name:rows[0].name+' +'+(rows.length-1);
   S.meals[TODAY].push({name,cal:total,items:rows,time,ts});
   updateStreak();
   saveState(S);closeMealSheet();updateRing();renderMeals();updateNextMeal();
@@ -485,9 +391,13 @@ function updateStreak(){
 }
 
 // ---- Weight sheet ----
-function openWtSheet(){document.getElementById('wtDate').value=TODAY;document.getElementById('wtOverlay').classList.add('open');setTimeout(()=>document.getElementById('wtInput').focus(),100);}
+function openWtSheet(){
+  document.getElementById('wtDate').value=TODAY;
+  document.getElementById('wtOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('wtInput').focus(),100);
+}
 function closeWtSheet(){document.getElementById('wtOverlay').classList.remove('open');document.getElementById('wtInput').value='';}
-function overlayClickWt(e){if(e.target.id==='wtOverlay')closeWtSheet();}
+
 function saveWeight(){
   const wt=parseFloat(document.getElementById('wtInput').value);
   const dt=document.getElementById('wtDate').value;
@@ -497,6 +407,10 @@ function saveWeight(){
   S.weights.sort((a,b)=>a.date.localeCompare(b.date));
   saveState(S);closeWtSheet();renderWeightScreen();
 }
+
+// ---- Overlay dismiss on backdrop tap ----
+document.getElementById('mealOverlay').addEventListener('click',function(e){if(e.target===this)closeMealSheet();});
+document.getElementById('wtOverlay').addEventListener('click',function(e){if(e.target===this)closeWtSheet();});
 
 // ---- Toast ----
 let toastTimer;
@@ -517,8 +431,8 @@ function renderWeightScreen(){
   else{
     list.innerHTML=[...wts].reverse().map((w,i,arr)=>{
       const prev=arr[i+1];let pill='';
-      if(prev){const d=w.wt-prev.wt;const cls=d<0?'diff-down':d>0?'diff-up':'diff-same';pill=`<span class="diff-pill ${cls}">${d<0?'':'+'}${d.toFixed(1)}</span>`;}
-      return `<div class="wt-row"><span>${new Date(w.date+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</span><span style="font-weight:600">${w.wt} lbs</span>${pill}</div>`;
+      if(prev){const d=w.wt-prev.wt;const cls=d<0?'diff-down':d>0?'diff-up':'diff-same';pill='<span class="diff-pill '+cls+'">'+(d<0?'':'+')+d.toFixed(1)+'</span>';}
+      return '<div class="wt-row"><span>'+new Date(w.date+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric'})+'</span><span style="font-weight:600">'+w.wt+' lbs</span>'+pill+'</div>';
     }).join('');
   }
   if(wtChartInst){wtChartInst.destroy();wtChartInst=null;}
@@ -568,74 +482,39 @@ function renderProgress(){
   });
 }
 
-function showScreen(name,btn){
+// ---- Nav ----
+function showScreen(name){
   clearInterval(timerInterval);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  btn.classList.add('active');
+  const btn=document.querySelector('.nav-btn[data-screen="'+name+'"]');
+  if(btn) btn.classList.add('active');
   if(name==='today') updateNextMeal();
   if(name==='history') renderHistory();
   if(name==='weight') renderWeightScreen();
   if(name==='progress') renderProgress();
 }
 
-updateRing(); renderMeals(); updateNextMeal();
+document.querySelectorAll('.nav-btn[data-screen]').forEach(btn=>{
+  btn.addEventListener('click',function(){showScreen(this.dataset.screen);});
+});
 
-// ---- PWA Service Worker ----
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    reg.update(); // force check for SW updates on every load
-  }).catch(()=>{});
-}
+// ---- Button wiring ----
+document.getElementById('btnAddMeal').addEventListener('click',()=>openMealSheet());
+document.getElementById('btnAddFood').addEventListener('click',()=>addFoodRow());
+document.getElementById('btnCancelMeal').addEventListener('click',closeMealSheet);
+document.getElementById('saveMealBtn').addEventListener('click',saveMeal);
+document.getElementById('btnAddWeight').addEventListener('click',openWtSheet);
+document.getElementById('btnCancelWt').addEventListener('click',closeWtSheet);
+document.getElementById('btnSaveWt').addEventListener('click',saveWeight);
 
-// ---- Notifications ----
-let notifScheduledFor = null; // epoch ms of scheduled notification
+// ---- Init ----
+updateRing();
+renderMeals();
+updateNextMeal();
 
-async function requestNotifPermission() {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission === 'granted') return true;
-  if (Notification.permission === 'denied') return false;
-  const result = await Notification.requestPermission();
-  return result === 'granted';
-}
-
-async function timerCardTapped() {
-  const lastTs = getLastMealTs();
-  if (!lastTs) return; // timer shows "Now", nothing to schedule
-  const fireAt = lastTs + 3 * 60 * 60 * 1000;
-  if (fireAt <= Date.now()) return; // already passed
-
-  const granted = await requestNotifPermission();
-  if (!granted) {
-    showToast('Enable notifications in Settings first');
-    return;
-  }
-
-  // Send schedule message to service worker
-  const reg = await navigator.serviceWorker.ready.catch(()=>null);
-  if (!reg) {
-    showToast('Add to Home Screen to enable notifications');
-    return;
-  }
-  reg.active.postMessage({ type: 'SCHEDULE_MEAL_NOTIF', fireAt });
-  notifScheduledFor = fireAt;
-
-  const readyAt = new Date(fireAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  showToast(`Reminder set for ${readyAt} 🔔`);
-  document.getElementById('notifHint').textContent = '🔔 reminder set — tap to update';
-}
-
-// Show/hide the tap hint on the timer card based on timer state
-function updateNotifHint(waiting) {
-  const hint = document.getElementById('notifHint');
-  if (!hint) return;
-  if (waiting && 'Notification' in window) {
-    hint.style.display = 'block';
-  } else {
-    hint.style.display = 'none';
-  }
-}
-
+}); // end DOMContentLoaded
+</script>
 </body>
 </html>
