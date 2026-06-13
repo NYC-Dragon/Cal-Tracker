@@ -1,0 +1,24 @@
+{
+  "name": "Cal Tracker",
+  "short_name": "Cal Tracker",
+  "description": "12-week summer calorie and weight tracker",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f3",
+  "theme_color": "#f5f5f3",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
