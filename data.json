@@ -1,6 +1,29 @@
 {
-  "meals": {},
+  "meals": {
+    "2026-06-13": [
+      {
+        "name": "Milk +2",
+        "cal": 185,
+        "items": [
+          {
+            "name": "Milk",
+            "cal": 90
+          },
+          {
+            "name": "Brown sugar",
+            "cal": 38
+          },
+          {
+            "name": "Morin vanilla",
+            "cal": 57
+          }
+        ],
+        "time": "10:37 AM",
+        "ts": 1781365030698
+      }
+    ]
+  },
   "weights": [],
-  "streak": 0,
-  "lastLogged": null
+  "streak": 1,
+  "lastLogged": "2026-06-13"
 }
