@@ -100,10 +100,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="val" id="mealCount">0</div>
       <div class="sub">550 cal max each</div>
     </div>
-    <div class="metric">
+    <div class="metric" id="timerCard" style="cursor:pointer">
       <div class="lbl"><i class="ti ti-clock" style="font-size:14px"></i> Next meal</div>
       <div class="val timer-ok" id="nextTime" style="font-size:17px">Now</div>
       <div class="sub" id="nextTimeSub">ready to eat</div>
+      <div id="notifHint" style="font-size:10px;color:var(--blue);margin-top:5px;display:none"><i class="ti ti-bell" style="font-size:11px"></i> tap to set reminder</div>
     </div>
   </div>
   <div class="section-label">Meals logged — tap to copy</div>
@@ -195,8 +196,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-const TODAY = new Date().toISOString().split('T')[0];
-let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null;
+let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null, midnightTimer=null;
+
+// Always compute today's date fresh — never stale across midnight
+function getToday(){ return new Date().toISOString().split('T')[0]; }
+let TODAY = getToday();
+
+// Midnight rollover — when the clock ticks past midnight, refresh TODAY
+// and re-render the Today screen so new meals log to the correct date
+function scheduleMidnightRollover(){
+  clearTimeout(midnightTimer);
+  const now = new Date();
+  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 1).getTime() - now.getTime();
+  midnightTimer = setTimeout(()=>{
+    TODAY = getToday();
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+    updateRing(); renderMeals(); updateNextMeal();
+    scheduleMidnightRollover(); // reschedule for next midnight
+  }, msUntilMidnight);
+}
 
 function loadState(){
   try{return JSON.parse(localStorage.getItem('calTracker3')||'null')||{meals:{},weights:[],streak:0,lastLogged:null};}
@@ -236,11 +254,13 @@ function updateNextMeal(){
     if(msLeft<=0){
       clearInterval(timerInterval);
       el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';
+      document.getElementById('notifHint').style.display='none';
     } else {
       const s=Math.ceil(msLeft/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
       el.textContent=h>0?h+'h '+m+'m':m+'m '+String(sec).padStart(2,'0')+'s';
       el.className='val timer-wait';
       subEl.textContent='ok at '+new Date(lastTs+3*60*60*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('notifHint').style.display='block';
     }
   }
   tick();
@@ -377,8 +397,11 @@ function saveMeal(){
   const now=new Date();
   const time=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const ts=now.getTime();
+  // Always log to the actual current date at save time
+  const saveDate = getToday();
+  if(!S.meals[saveDate])S.meals[saveDate]=[];
   const name=rows.length===1?rows[0].name:rows[0].name+' +'+(rows.length-1);
-  S.meals[TODAY].push({name,cal:total,items:rows,time,ts});
+  S.meals[saveDate].push({name,cal:total,items:rows,time,ts});
   updateStreak();
   saveState(S);closeMealSheet();updateRing();renderMeals();updateNextMeal();
 }
@@ -500,6 +523,41 @@ document.querySelectorAll('.nav-btn[data-screen]').forEach(btn=>{
   btn.addEventListener('click',function(){showScreen(this.dataset.screen);});
 });
 
+// ---- Notification reminder ----
+async function scheduleReminder(){
+  const lastTs = getLastMealTs();
+  if(!lastTs) return;
+  const fireAt = lastTs + 3*60*60*1000;
+  if(fireAt <= Date.now()) return;
+
+  if(!('Notification' in window)){
+    showToast('Notifications not supported on this browser');
+    return;
+  }
+
+  let perm = Notification.permission;
+  if(perm === 'default'){
+    perm = await Notification.requestPermission();
+  }
+  if(perm === 'denied'){
+    showToast('Notifications blocked — enable in Settings > Safari');
+    return;
+  }
+
+  // Schedule via setTimeout — works while app is open/backgrounded on iOS PWA
+  const delay = fireAt - Date.now();
+  const readyAt = new Date(fireAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  setTimeout(()=>{
+    new Notification('Time to eat 🍽️', {
+      body: 'Your 3-hour window is up — next meal is ready.',
+      tag: 'meal-ready'
+    });
+  }, delay);
+
+  document.getElementById('notifHint').textContent = '🔔 reminder set for ' + readyAt;
+  showToast('Reminder set for ' + readyAt);
+}
+
 // ---- Button wiring ----
 document.getElementById('btnAddMeal').addEventListener('click',()=>openMealSheet());
 document.getElementById('btnAddFood').addEventListener('click',()=>addFoodRow());
@@ -509,10 +567,13 @@ document.getElementById('btnAddWeight').addEventListener('click',openWtSheet);
 document.getElementById('btnCancelWt').addEventListener('click',closeWtSheet);
 document.getElementById('btnSaveWt').addEventListener('click',saveWeight);
 
+document.getElementById('timerCard').addEventListener('click', scheduleReminder);
+
 // ---- Init ----
 updateRing();
 renderMeals();
 updateNextMeal();
+scheduleMidnightRollover();
 
 }); // end DOMContentLoaded
 </script>
