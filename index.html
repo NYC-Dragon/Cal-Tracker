@@ -30,7 +30,7 @@
     --red:#f09595;--red-bg:#501313;
     --amber:#fac775;--amber-bg:#412402;
   }}
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
   .screen{display:none;flex:1;overflow-y:auto;padding:16px 16px 88px}
   .screen.active{display:block}
@@ -584,7 +584,9 @@ updateRing(); renderMeals(); updateNextMeal();
 
 // ---- PWA Service Worker ----
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.update(); // force check for SW updates on every load
+  }).catch(()=>{});
 }
 
 // ---- Notifications ----
