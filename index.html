@@ -120,9 +120,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- WEIGHT -->
 <div id="screen-weight" class="screen">
-  <div class="page-header"><h1>Weight</h1><p>250 lbs → 215 lbs goal</p></div>
+  <div class="page-header"><h1>Weight</h1><p>260 lbs → 220 lbs goal</p></div>
   <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px">
-    <span>Start: 250</span><span id="wtLostLabel">0 lbs lost</span><span>Goal: 215</span>
+    <span>Start: 260</span><span id="wtLostLabel">0 lbs lost</span><span>Goal: 220</span>
   </div>
   <div class="prog-bar"><div class="prog-fill" id="wtProgress" style="width:0%"></div></div>
   <div class="chart-wrap" style="height:190px"><canvas id="wtChart"></canvas></div>
@@ -445,8 +445,8 @@ function showToast(msg){
 // ---- Weight screen ----
 function renderWeightScreen(){
   const wts=S.weights;
-  const latest=wts.length?wts[wts.length-1].wt:250;
-  const lost=Math.max(0,250-latest);
+  const latest=wts.length?wts[wts.length-1].wt:260;
+  const lost=Math.max(0,260-latest);
   document.getElementById('wtLostLabel').textContent=lost.toFixed(1)+' lbs lost';
   document.getElementById('wtProgress').style.width=Math.min(lost/35*100,100).toFixed(1)+'%';
   const list=document.getElementById('wtList');
@@ -475,7 +475,7 @@ function renderWeightScreen(){
 function renderProgress(){
   document.getElementById('streakNum').textContent=S.streak||0;
   const wts=S.weights;
-  const lost=wts.length?Math.max(0,250-wts[wts.length-1].wt):0;
+  const lost=wts.length?Math.max(0,260-wts[wts.length-1].wt):0;
   document.getElementById('totalLost').textContent=lost.toFixed(1)+' lbs';
   const daysLeft=Math.max(0,Math.round((new Date('2026-09-01')-new Date())/86400000));
   document.getElementById('weeksLeft').textContent=Math.ceil(daysLeft/7);
