@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -78,9 +78,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1}
 .chart-wrap{position:relative;width:100%;margin-bottom:20px}
+/* Settings */
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:0.5px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:15px;color:var(--text)}
+.settings-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.settings-val{font-size:13px;color:var(--muted);text-align:right;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settings-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:0 14px;margin-bottom:20px}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:13px;padding:10px 14px;border-radius:var(--r-md);margin-bottom:16px}
+.sync-ok{background:var(--green-bg);color:var(--green)}
+.sync-err{background:var(--red-bg);color:var(--red)}
+.sync-pending{background:var(--amber-bg);color:var(--amber)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.btn-full{width:100%;padding:13px;border:none;border-radius:var(--r-lg);background:var(--blue);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:10px}
+.btn-full:active{opacity:.85}
+.btn-full.secondary{background:var(--surface);color:var(--text);border:0.5px solid var(--border)}
+/* Loading overlay */
+#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#loadingScreen p{font-size:14px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+
+<!-- Loading -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Loading your data…</p>
+</div>
 
 <!-- TODAY -->
 <div id="screen-today" class="screen active">
@@ -140,11 +166,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="metric"><div class="lbl">Avg cal/day</div><div class="val" id="avgCal">—</div><div class="sub">goal ≤ 1,950</div></div>
   </div>
   <div class="metric-row">
-    <div class="metric"><div class="lbl">Total lost</div><div class="val" id="totalLost">0 lbs</div><div class="sub">goal: 35 lbs</div></div>
+    <div class="metric"><div class="lbl">Total lost</div><div class="val" id="totalLost">0 lbs</div><div class="sub">goal: 40 lbs</div></div>
     <div class="metric"><div class="lbl">On track</div><div class="val" id="onTrack">—</div><div class="sub">2.9 lbs/week pace</div></div>
   </div>
   <div class="section-label">Weekly calories</div>
   <div class="chart-wrap" style="height:180px"><canvas id="wkChart"></canvas></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <div class="page-header"><h1>Settings</h1><p>GitHub sync &amp; preferences</p></div>
+
+  <div id="syncStatus" class="sync-status sync-pending" style="display:none">
+    <div class="sync-dot"></div><span id="syncStatusText">Checking…</span>
+  </div>
+
+  <div class="section-label">GitHub sync</div>
+  <div class="settings-card">
+    <div class="settings-row">
+      <div><div class="settings-label">Personal Access Token</div><div class="settings-sub">repo scope required</div></div>
+      <div class="settings-val" id="tokenDisplay">Not set</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Repository</div></div>
+      <div class="settings-val">NYC-Dragon/Cal-Tracker</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">Last synced</div></div>
+      <div class="settings-val" id="lastSyncedDisplay">Never</div>
+    </div>
+  </div>
+
+  <button class="btn-full" id="btnSetToken"><i class="ti ti-key"></i> Set GitHub Token</button>
+  <button class="btn-full secondary" id="btnSyncNow"><i class="ti ti-refresh"></i> Sync now</button>
+  <button class="btn-full secondary" id="btnClearToken" style="color:var(--red);border-color:var(--red)"><i class="ti ti-trash"></i> Remove token</button>
 </div>
 
 <!-- NAV -->
@@ -153,6 +208,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="nav-btn" data-screen="history"><i class="ti ti-calendar"></i>History</button>
   <button class="nav-btn" data-screen="weight"><i class="ti ti-scale"></i>Weight</button>
   <button class="nav-btn" data-screen="progress"><i class="ti ti-chart-bar"></i>Progress</button>
+  <button class="nav-btn" data-screen="settings"><i class="ti ti-settings"></i>Settings</button>
 </nav>
 
 <!-- MEAL SHEET -->
@@ -190,38 +246,128 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- TOKEN SHEET -->
+<div class="overlay" id="tokenOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>GitHub Token</h3>
+    <p class="sheet-sub">Paste your Personal Access Token (repo scope). It stays on your device only.</p>
+    <div class="field"><label>Token</label><input type="password" id="tokenInput" placeholder="ghp_…" autocomplete="off" spellcheck="false"/></div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="btnCancelToken">Cancel</button>
+      <button class="btn-save" id="btnSaveToken">Save &amp; Sync</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null, midnightTimer=null;
+const REPO = 'NYC-Dragon/Cal-Tracker';
+const DATA_PATH = 'data.json';
+const API = 'https://api.github.com';
 
-// Always compute today's date fresh — never stale across midnight
+let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null, midnightTimer=null;
+let isSyncing = false;
+
 function getToday(){ return new Date().toISOString().split('T')[0]; }
 let TODAY = getToday();
 
-// Midnight rollover — when the clock ticks past midnight, refresh TODAY
-// and re-render the Today screen so new meals log to the correct date
-function scheduleMidnightRollover(){
-  clearTimeout(midnightTimer);
-  const now = new Date();
-  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 1).getTime() - now.getTime();
-  midnightTimer = setTimeout(()=>{
-    TODAY = getToday();
-    document.getElementById('todayDate').textContent = new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
-    updateRing(); renderMeals(); updateNextMeal();
-    scheduleMidnightRollover(); // reschedule for next midnight
-  }, msUntilMidnight);
+// ---- State: data lives here in memory, persisted to GitHub ----
+let S = {meals:{}, weights:[], streak:0, lastLogged:null};
+
+// Token stored in localStorage (only thing we keep locally)
+function getToken(){ return localStorage.getItem('gh_token')||''; }
+function setToken(t){ localStorage.setItem('gh_token', t); updateTokenDisplay(); }
+function clearToken(){ localStorage.removeItem('gh_token'); updateTokenDisplay(); }
+
+function updateTokenDisplay(){
+  const t = getToken();
+  document.getElementById('tokenDisplay').textContent = t ? t.slice(0,8)+'…' : 'Not set';
 }
 
-function loadState(){
-  try{return JSON.parse(localStorage.getItem('calTracker3')||'null')||{meals:{},weights:[],streak:0,lastLogged:null};}
-  catch(e){return{meals:{},weights:[],streak:0,lastLogged:null};}
+// ---- GitHub API ----
+async function ghGet(path){
+  const res = await fetch(API+path, {
+    headers:{ Authorization:'token '+getToken(), Accept:'application/vnd.github.v3+json' }
+  });
+  if(!res.ok) throw new Error('GET '+path+' → '+res.status);
+  return res.json();
 }
-function saveState(s){localStorage.setItem('calTracker3',JSON.stringify(s));}
-let S=loadState();
+
+async function ghPut(path, body){
+  const res = await fetch(API+path, {
+    method:'PUT',
+    headers:{ Authorization:'token '+getToken(), Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){ const t=await res.text(); throw new Error('PUT '+path+' → '+res.status+': '+t); }
+  return res.json();
+}
+
+async function loadFromGitHub(){
+  if(!getToken()) return false;
+  try {
+    const file = await ghGet('/repos/'+REPO+'/contents/'+DATA_PATH);
+    const decoded = atob(file.content.replace(/\n/g,''));
+    S = JSON.parse(decoded);
+    return true;
+  } catch(e) {
+    // 404 means data.json doesn't exist yet — that's fine, start fresh
+    if(e.message.includes('404')) return true;
+    throw e;
+  }
+}
+
+async function saveToGitHub(){
+  if(!getToken() || isSyncing) return;
+  isSyncing = true;
+  setSyncStatus('pending','Saving…');
+  try {
+    // Get current SHA (needed for update)
+    let sha = null;
+    try {
+      const existing = await ghGet('/repos/'+REPO+'/contents/'+DATA_PATH);
+      sha = existing.sha;
+    } catch(e){ /* file doesn't exist yet, sha stays null */ }
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(S, null, 2))));
+    const body = { message:'Update cal-tracker data', content };
+    if(sha) body.sha = sha;
+    await ghPut('/repos/'+REPO+'/contents/'+DATA_PATH, body);
+
+    const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('lastSynced', now);
+    document.getElementById('lastSyncedDisplay').textContent = now;
+    setSyncStatus('ok','Synced at '+now);
+  } catch(e){
+    setSyncStatus('err','Sync failed — check token');
+    console.error(e);
+  } finally { isSyncing = false; }
+}
+
+function setSyncStatus(type, msg){
+  const el = document.getElementById('syncStatus');
+  el.style.display = 'flex';
+  el.className = 'sync-status sync-'+type;
+  document.getElementById('syncStatusText').textContent = msg;
+}
+
+// ---- Midnight rollover ----
+function scheduleMidnightRollover(){
+  clearTimeout(midnightTimer);
+  const now=new Date();
+  const msUntilMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,1).getTime()-now.getTime();
+  midnightTimer=setTimeout(()=>{
+    TODAY=getToday();
+    document.getElementById('todayDate').textContent=new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+    updateRing();renderMeals();updateNextMeal();
+    scheduleMidnightRollover();
+  },msUntilMidnight);
+}
 
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
 
@@ -246,28 +392,27 @@ function getLastMealTs(){const meals=todayMeals();return meals.length?meals[meal
 function updateNextMeal(){
   const el=document.getElementById('nextTime');
   const subEl=document.getElementById('nextTimeSub');
+  const hint=document.getElementById('notifHint');
   clearInterval(timerInterval);
   const lastTs=getLastMealTs();
-  if(!lastTs){el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';return;}
+  if(!lastTs){el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';hint.style.display='none';return;}
   function tick(){
     const msLeft=(lastTs+3*60*60*1000)-Date.now();
     if(msLeft<=0){
       clearInterval(timerInterval);
-      el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';
-      document.getElementById('notifHint').style.display='none';
+      el.textContent='Now';el.className='val timer-ok';subEl.textContent='ready to eat';hint.style.display='none';
     } else {
       const s=Math.ceil(msLeft/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
       el.textContent=h>0?h+'h '+m+'m':m+'m '+String(sec).padStart(2,'0')+'s';
       el.className='val timer-wait';
       subEl.textContent='ok at '+new Date(lastTs+3*60*60*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      document.getElementById('notifHint').style.display='block';
+      hint.style.display='block';
     }
   }
-  tick();
-  timerInterval=setInterval(tick,1000);
+  tick();timerInterval=setInterval(tick,1000);
 }
 
-// ---- Meals render ----
+// ---- Meals ----
 function renderMeals(){
   const list=document.getElementById('mealList');
   const meals=todayMeals();
@@ -282,22 +427,15 @@ function renderMeals(){
       +'<button class="del-btn" data-del="'+i+'" aria-label="Delete"><i class="ti ti-x"></i></button></div>'
       +'<div class="copy-hint">tap to copy</div></div></div>';
   }).join('');
-
   list.querySelectorAll('[data-copy]').forEach(el=>{
-    el.addEventListener('click',function(e){
-      if(e.target.closest('[data-del]')) return;
-      copyTodayMeal(parseInt(this.dataset.copy));
-    });
+    el.addEventListener('click',function(e){if(e.target.closest('[data-del]'))return;copyTodayMeal(parseInt(this.dataset.copy));});
   });
   list.querySelectorAll('[data-del]').forEach(el=>{
-    el.addEventListener('click',function(e){
-      e.stopPropagation();
-      deleteMeal(parseInt(this.dataset.del));
-    });
+    el.addEventListener('click',function(e){e.stopPropagation();deleteMeal(parseInt(this.dataset.del));});
   });
 }
 
-function deleteMeal(i){S.meals[TODAY].splice(i,1);saveState(S);updateRing();renderMeals();updateNextMeal();}
+function deleteMeal(i){S.meals[TODAY].splice(i,1);saveToGitHub();updateRing();renderMeals();updateNextMeal();}
 function copyTodayMeal(i){const m=todayMeals()[i];if(!m)return;openMealSheet(m);showToast('Meal copied — edit & save');}
 
 // ---- History ----
@@ -318,20 +456,15 @@ function renderHistory(){
           +'<div style="flex:1;min-width:0"><div class="hist-meal-name">'+escHtml(m.name)+'</div>'
           +(its?'<div class="hist-meal-items">'+its+'</div>':'')
           +'<div class="hist-meal-time">'+m.time+'</div></div>'
-          +'<div style="text-align:right;flex-shrink:0;margin-left:12px">'
-          +'<div class="hist-meal-cal">'+m.cal+'</div>'
+          +'<div style="text-align:right;flex-shrink:0;margin-left:12px"><div class="hist-meal-cal">'+m.cal+'</div>'
           +'<div class="hist-copy-hint">tap to copy</div></div></div>';
-      }).join('')
-      +'</div>';
+      }).join('')+'</div>';
   }).join('');
-
   list.querySelectorAll('[data-hist-date]').forEach(el=>{
     el.addEventListener('click',function(){
       const meal=(S.meals[this.dataset.histDate]||[])[parseInt(this.dataset.histIdx)];
-      if(!meal) return;
-      openMealSheet(meal);
-      showToast('Meal copied — edit & save');
-      showScreen('today');
+      if(!meal)return;
+      openMealSheet(meal);showToast('Meal copied — edit & save');showScreen('today');
     });
   });
 }
@@ -352,7 +485,7 @@ function openMealSheet(prefill){
 function closeMealSheet(){document.getElementById('mealOverlay').classList.remove('open');}
 
 function addFoodRow(name,cal){
-  name=name||''; cal=cal||'';
+  name=name||'';cal=cal||'';
   const id=++foodRowCount;
   const div=document.createElement('div');
   div.className='food-item-row';div.id='foodRow'+id;
@@ -364,8 +497,8 @@ function addFoodRow(name,cal){
   div.querySelector('.food-cal-input').addEventListener('input',updateMealTotal);
   div.querySelector('.food-del').addEventListener('click',function(){
     const row=document.getElementById('foodRow'+this.dataset.row);
-    if(row) row.remove();
-    if(!document.querySelectorAll('.food-item-row').length) addFoodRow();
+    if(row)row.remove();
+    if(!document.querySelectorAll('.food-item-row').length)addFoodRow();
     updateMealTotal();
   });
 }
@@ -389,57 +522,69 @@ function updateMealTotal(){
 function saveMeal(){
   const rows=getFoodRows().filter(r=>r.name&&r.cal>0);
   document.getElementById('mealErr').style.display=!rows.length?'block':'none';
-  if(!rows.length) return;
+  if(!rows.length)return;
   const total=rows.reduce((a,r)=>a+r.cal,0);
   document.getElementById('mealOverErr').style.display=total>550?'block':'none';
-  if(total>550) return;
-  if(!S.meals[TODAY])S.meals[TODAY]=[];
+  if(total>550)return;
+  const saveDate=getToday();
+  if(!S.meals[saveDate])S.meals[saveDate]=[];
   const now=new Date();
   const time=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const ts=now.getTime();
-  // Always log to the actual current date at save time
-  const saveDate = getToday();
-  if(!S.meals[saveDate])S.meals[saveDate]=[];
   const name=rows.length===1?rows[0].name:rows[0].name+' +'+(rows.length-1);
   S.meals[saveDate].push({name,cal:total,items:rows,time,ts});
   updateStreak();
-  saveState(S);closeMealSheet();updateRing();renderMeals();updateNextMeal();
+  saveToGitHub();
+  closeMealSheet();updateRing();renderMeals();updateNextMeal();
 }
 
 function updateStreak(){
-  if(S.lastLogged===TODAY) return;
+  if(S.lastLogged===TODAY)return;
   const yest=new Date();yest.setDate(yest.getDate()-1);
   S.streak=S.lastLogged===yest.toISOString().split('T')[0]?(S.streak||0)+1:1;
   S.lastLogged=TODAY;
 }
 
 // ---- Weight sheet ----
-function openWtSheet(){
-  document.getElementById('wtDate').value=TODAY;
-  document.getElementById('wtOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('wtInput').focus(),100);
-}
+function openWtSheet(){document.getElementById('wtDate').value=TODAY;document.getElementById('wtOverlay').classList.add('open');setTimeout(()=>document.getElementById('wtInput').focus(),100);}
 function closeWtSheet(){document.getElementById('wtOverlay').classList.remove('open');document.getElementById('wtInput').value='';}
 
 function saveWeight(){
   const wt=parseFloat(document.getElementById('wtInput').value);
   const dt=document.getElementById('wtDate').value;
-  if(!wt||!dt) return;
+  if(!wt||!dt)return;
   S.weights=S.weights.filter(w=>w.date!==dt);
   S.weights.push({date:dt,wt});
   S.weights.sort((a,b)=>a.date.localeCompare(b.date));
-  saveState(S);closeWtSheet();renderWeightScreen();
+  saveToGitHub();closeWtSheet();renderWeightScreen();
 }
 
-// ---- Overlay dismiss on backdrop tap ----
-document.getElementById('mealOverlay').addEventListener('click',function(e){if(e.target===this)closeMealSheet();});
-document.getElementById('wtOverlay').addEventListener('click',function(e){if(e.target===this)closeWtSheet();});
+// ---- Token sheet ----
+function openTokenSheet(){document.getElementById('tokenOverlay').classList.add('open');setTimeout(()=>document.getElementById('tokenInput').focus(),100);}
+function closeTokenSheet(){document.getElementById('tokenOverlay').classList.remove('open');document.getElementById('tokenInput').value='';}
 
-// ---- Toast ----
-let toastTimer;
-function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+async function saveToken(){
+  const t=document.getElementById('tokenInput').value.trim();
+  if(!t)return;
+  setToken(t);
+  closeTokenSheet();
+  showToast('Token saved — syncing…');
+  await syncNow();
+}
+
+async function syncNow(){
+  if(!getToken()){showToast('Set a GitHub token in Settings first');showScreen('settings');return;}
+  setSyncStatus('pending','Syncing…');
+  document.getElementById('syncStatus').style.display='flex';
+  try{
+    await loadFromGitHub();
+    updateRing();renderMeals();updateNextMeal();
+    await saveToGitHub();
+    showToast('Synced with GitHub ✓');
+  } catch(e){
+    setSyncStatus('err','Sync failed — check token');
+    showToast('Sync failed — check token in Settings');
+  }
 }
 
 // ---- Weight screen ----
@@ -448,7 +593,7 @@ function renderWeightScreen(){
   const latest=wts.length?wts[wts.length-1].wt:260;
   const lost=Math.max(0,260-latest);
   document.getElementById('wtLostLabel').textContent=lost.toFixed(1)+' lbs lost';
-  document.getElementById('wtProgress').style.width=Math.min(lost/35*100,100).toFixed(1)+'%';
+  document.getElementById('wtProgress').style.width=Math.min(lost/40*100,100).toFixed(1)+'%';
   const list=document.getElementById('wtList');
   if(!wts.length){list.innerHTML='<div class="empty-state">No weight logged yet</div>';}
   else{
@@ -459,7 +604,7 @@ function renderWeightScreen(){
     }).join('');
   }
   if(wtChartInst){wtChartInst.destroy();wtChartInst=null;}
-  if(wts.length<2) return;
+  if(wts.length<2)return;
   const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
   wtChartInst=new Chart(document.getElementById('wtChart'),{
     type:'line',
@@ -495,7 +640,7 @@ function renderProgress(){
     if(c>0)weeks.push({label:'Wk '+(i+1),cal:c});
   }
   if(wkChartInst){wkChartInst.destroy();wkChartInst=null;}
-  if(!weeks.length) return;
+  if(!weeks.length)return;
   const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
   wkChartInst=new Chart(document.getElementById('wkChart'),{
     type:'bar',
@@ -505,6 +650,13 @@ function renderProgress(){
   });
 }
 
+// ---- Settings screen ----
+function renderSettings(){
+  updateTokenDisplay();
+  const ls=localStorage.getItem('lastSynced');
+  document.getElementById('lastSyncedDisplay').textContent=ls||'Never';
+}
+
 // ---- Nav ----
 function showScreen(name){
   clearInterval(timerInterval);
@@ -512,11 +664,12 @@ function showScreen(name){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   const btn=document.querySelector('.nav-btn[data-screen="'+name+'"]');
-  if(btn) btn.classList.add('active');
-  if(name==='today') updateNextMeal();
-  if(name==='history') renderHistory();
-  if(name==='weight') renderWeightScreen();
-  if(name==='progress') renderProgress();
+  if(btn)btn.classList.add('active');
+  if(name==='today'){updateRing();renderMeals();updateNextMeal();}
+  if(name==='history')renderHistory();
+  if(name==='weight')renderWeightScreen();
+  if(name==='progress')renderProgress();
+  if(name==='settings')renderSettings();
 }
 
 document.querySelectorAll('.nav-btn[data-screen]').forEach(btn=>{
@@ -525,38 +678,32 @@ document.querySelectorAll('.nav-btn[data-screen]').forEach(btn=>{
 
 // ---- Notification reminder ----
 async function scheduleReminder(){
-  const lastTs = getLastMealTs();
-  if(!lastTs) return;
-  const fireAt = lastTs + 3*60*60*1000;
-  if(fireAt <= Date.now()) return;
-
-  if(!('Notification' in window)){
-    showToast('Notifications not supported on this browser');
-    return;
-  }
-
-  let perm = Notification.permission;
-  if(perm === 'default'){
-    perm = await Notification.requestPermission();
-  }
-  if(perm === 'denied'){
-    showToast('Notifications blocked — enable in Settings > Safari');
-    return;
-  }
-
-  // Schedule via setTimeout — works while app is open/backgrounded on iOS PWA
-  const delay = fireAt - Date.now();
-  const readyAt = new Date(fireAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  setTimeout(()=>{
-    new Notification('Time to eat 🍽️', {
-      body: 'Your 3-hour window is up — next meal is ready.',
-      tag: 'meal-ready'
-    });
-  }, delay);
-
-  document.getElementById('notifHint').textContent = '🔔 reminder set for ' + readyAt;
-  showToast('Reminder set for ' + readyAt);
+  const lastTs=getLastMealTs();
+  if(!lastTs)return;
+  const fireAt=lastTs+3*60*60*1000;
+  if(fireAt<=Date.now())return;
+  if(!('Notification' in window)){showToast('Notifications not supported');return;}
+  let perm=Notification.permission;
+  if(perm==='default')perm=await Notification.requestPermission();
+  if(perm==='denied'){showToast('Notifications blocked — enable in Settings > Safari');return;}
+  const delay=fireAt-Date.now();
+  const readyAt=new Date(fireAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  setTimeout(()=>{ new Notification('Time to eat 🍽️',{body:'Your 3-hour window is up — next meal is ready.',tag:'meal-ready'}); },delay);
+  document.getElementById('notifHint').textContent='🔔 reminder set for '+readyAt;
+  showToast('Reminder set for '+readyAt);
 }
+
+// ---- Toast ----
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ---- Overlay dismissal ----
+document.getElementById('mealOverlay').addEventListener('click',function(e){if(e.target===this)closeMealSheet();});
+document.getElementById('wtOverlay').addEventListener('click',function(e){if(e.target===this)closeWtSheet();});
+document.getElementById('tokenOverlay').addEventListener('click',function(e){if(e.target===this)closeTokenSheet();});
 
 // ---- Button wiring ----
 document.getElementById('btnAddMeal').addEventListener('click',()=>openMealSheet());
@@ -566,14 +713,46 @@ document.getElementById('saveMealBtn').addEventListener('click',saveMeal);
 document.getElementById('btnAddWeight').addEventListener('click',openWtSheet);
 document.getElementById('btnCancelWt').addEventListener('click',closeWtSheet);
 document.getElementById('btnSaveWt').addEventListener('click',saveWeight);
+document.getElementById('timerCard').addEventListener('click',scheduleReminder);
+document.getElementById('btnSetToken').addEventListener('click',openTokenSheet);
+document.getElementById('btnCancelToken').addEventListener('click',closeTokenSheet);
+document.getElementById('btnSaveToken').addEventListener('click',saveToken);
+document.getElementById('btnSyncNow').addEventListener('click',syncNow);
+document.getElementById('btnClearToken').addEventListener('click',()=>{
+  clearToken();S={meals:{},weights:[],streak:0,lastLogged:null};
+  updateRing();renderMeals();updateNextMeal();
+  setSyncStatus('err','No token — data not syncing');
+  showToast('Token removed');
+});
 
-document.getElementById('timerCard').addEventListener('click', scheduleReminder);
+// ---- Init: load from GitHub then show app ----
+async function init(){
+  const loading=document.getElementById('loadingScreen');
+  const msg=document.getElementById('loadingMsg');
+  if(!getToken()){
+    msg.textContent='No token set — tap Settings to connect GitHub';
+    setTimeout(()=>{loading.style.display='none';showScreen('settings');},1500);
+    return;
+  }
+  try{
+    msg.textContent='Loading your data…';
+    await loadFromGitHub();
+    updateRing();renderMeals();updateNextMeal();
+    const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('lastSynced',now);
+    setSyncStatus('ok','Synced at '+now);
+    document.getElementById('syncStatus').style.display='flex';
+  } catch(e){
+    msg.textContent='Could not reach GitHub — check connection';
+    setSyncStatus('err','Sync failed');
+    setTimeout(()=>{loading.style.display='none';},2000);
+    return;
+  }
+  loading.style.display='none';
+  scheduleMidnightRollover();
+}
 
-// ---- Init ----
-updateRing();
-renderMeals();
-updateNextMeal();
-scheduleMidnightRollover();
+init();
 
 }); // end DOMContentLoaded
 </script>
