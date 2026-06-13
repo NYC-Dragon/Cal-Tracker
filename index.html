@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Cal Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.1);
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --hint: #a0a09a;
+    --blue: #3266ad;
+    --blue-bg: #e6f1fb;
+    --blue-text: #0c447c;
+    --green: #3b6d11;
+    --green-bg: #eaf3de;
+    --red: #a32d2d;
+    --red-bg: #fcebeb;
+    --amber: #854f0b;
+    --amber-bg: #faeeda;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2c2c2a;
+      --border: rgba(255,255,255,0.1);
+      --text: #e8e8e4;
+      --muted: #a0a09a;
+      --hint: #6b6b66;
+      --blue: #6da0e8;
+      --blue-bg: #042c53;
+      --blue-text: #b5d4f4;
+      --green: #97c459;
+      --green-bg: #173404;
+      --red: #f09595;
+      --red-bg: #501313;
+      --amber: #fac775;
+      --amber-bg: #412402;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen { display: none; flex: 1; overflow-y: auto; padding: 16px 16px 80px; }
+  .screen.active { display: block; }
+
+  /* Nav */
+  .nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    display: flex;
+    background: var(--surface);
+    border-top: 0.5px solid var(--border);
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    color: var(--hint);
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .nav-btn.active { color: var(--blue); }
+  .nav-btn i { font-size: 24px; }
+
+  /* Header */
+  .page-header { margin-bottom: 20px; }
+  .page-header h1 { font-size: 22px; font-weight: 600; color: var(--text); }
+  .page-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* Ring */
+  .ring-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+
+  /* Metric cards */
+  .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 20px; }
+  .metric {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+  }
+  .metric .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .metric .val { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1; }
+  .metric .sub { font-size: 11px; color: var(--hint); margin-top: 4px; }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+
+  /* Meal cards */
+  .meal-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .meal-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .meal-time { font-size: 12px; color: var(--hint); margin-top: 2px; }
+  .meal-right { display: flex; align-items: center; gap: 6px; }
+  .meal-cal { font-size: 18px; font-weight: 600; color: var(--blue); }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--hint); font-size: 18px; padding: 4px; display: flex; align-items: center; }
+  .empty-state { text-align: center; color: var(--hint); font-size: 14px; padding: 24px 0; }
+
+  /* Add button */
+  .add-btn {
+    width: 100%;
+    padding: 13px;
+    border: 0.5px dashed var(--border);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .add-btn:active { background: var(--surface2); }
+
+  /* Warning banner */
+  .warning {
+    background: var(--amber-bg);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--amber);
+    margin-bottom: 14px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .warning.show { display: flex; }
+
+  /* Progress bar */
+  .prog-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin: 6px 0 16px; }
+  .prog-fill { height: 100%; background: var(--blue); border-radius: 4px; transition: width 0.4s; }
+
+  /* Weight rows */
+  .wt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 14px;
+  }
+  .wt-row:last-child { border-bottom: none; }
+  .diff-pill { font-size: 12px; padding: 3px 9px; border-radius: 20px; font-weight: 500; }
+  .diff-down { background: var(--green-bg); color: var(--green); }
+  .diff-up { background: var(--red-bg); color: var(--red); }
+  .diff-same { background: var(--surface2); color: var(--muted); }
+
+  /* Streak badge */
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--amber-bg);
+    color: var(--amber);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  /* On track pill */
+  .on-track-yes { color: var(--green); font-weight: 600; }
+  .on-track-no { color: var(--red); font-weight: 600; }
+
+  /* Modal overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .sheet {
+    background: var(--surface);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+    width: 100%;
+    max-width: 430px;
+  }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .sheet h3 { font-size: 17px; font-weight: 600; margin-bottom: 18px; color: var(--text); }
+  .field { margin-bottom: 14px; }
+  .field label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .field input {
+    width: 100%;
+    padding: 11px 13px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(50,102,173,0.15); }
+  .field-err { font-size: 12px; color: var(--red); margin-top: 4px; display: none; }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-save {
+    flex: 2;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--blue);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-save:active { opacity: 0.85; }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; width: 100%; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- TODAY -->
+<div id="screen-today" class="screen active">
+  <div class="page-header">
+    <h1>Today</h1>
+    <p id="todayDate"></p>
+  </div>
+
+  <div id="mealWarning" class="warning">
+    <i class="ti ti-alert-triangle"></i>
+    <span id="warningText">Max 550 cal per meal</span>
+  </div>
+
+  <div class="ring-wrap">
+    <svg width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="Daily calorie ring">
+      <circle cx="85" cy="85" r="72" fill="none" stroke-width="14" stroke="var(--surface2)"/>
+      <circle id="ringFill" cx="85" cy="85" r="72" fill="none" stroke-width="14" stroke="var(--blue)"
+        stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452"
+        transform="rotate(-90 85 85)" style="transition:stroke-dashoffset 0.5s,stroke 0.3s"/>
+      <text x="85" y="77" text-anchor="middle" font-size="30" font-weight="700" fill="var(--text)" id="ringCal">0</text>
+      <text x="85" y="97" text-anchor="middle" font-size="13" fill="var(--muted)">of 1,950 cal</text>
+      <text x="85" y="115" text-anchor="middle" font-size="12" fill="var(--hint)" id="ringLeft">1,950 remaining</text>
+    </svg>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric">
+      <div class="lbl"><i class="ti ti-bowl-chopsticks" style="font-size:14px"></i> Meals</div>
+      <div class="val" id="mealCount">0</div>
+      <div class="sub">550 cal max each</div>
+    </div>
+    <div class="metric">
+      <div class="lbl"><i class="ti ti-clock" style="font-size:14px"></i> Next ok</div>
+      <div class="val" id="nextTime" style="font-size:18px">Now</div>
+      <div class="sub">3hr between meals</div>
+    </div>
+  </div>
+
+  <div class="section-label">Meals logged</div>
+  <div id="mealList"></div>
+  <button class="add-btn" onclick="openMealSheet()">
+    <i class="ti ti-plus"></i> Log a meal
+  </button>
+</div>
+
+<!-- WEIGHT -->
+<div id="screen-weight" class="screen">
+  <div class="page-header">
+    <h1>Weight</h1>
+    <p>250 lbs → 215 lbs goal</p>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;">
+    <span>Start: 250</span><span id="wtLostLabel">0 lbs lost</span><span>Goal: 215</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="wtProgress" style="width:0%"></div></div>
+
+  <div class="chart-wrap" style="height:190px;">
+    <canvas id="wtChart" role="img" aria-label="Weight trend chart">Weight over time</canvas>
+  </div>
+
+  <button class="add-btn" onclick="openWtSheet()" style="margin-bottom:20px">
+    <i class="ti ti-plus"></i> Log weight
+  </button>
+
+  <div class="section-label">History</div>
+  <div id="wtList"></div>
+</div>
+
+<!-- PROGRESS -->
+<div id="screen-progress" class="screen">
+  <div class="page-header">
+    <h1>Progress</h1>
+    <p>12-week summer goal</p>
+  </div>
+
+  <div class="streak-badge"><i class="ti ti-flame"></i> <span id="streakNum">0</span> day streak</div>
+
+  <div class="metric-row">
+    <div class="metric">
+      <div class="lbl">Weeks left</div>
+      <div class="val" id="weeksLeft">12</div>
+      <div class="sub">until Sept 1</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Avg cal/day</div>
+      <div class="val" id="avgCal">—</div>
+      <div class="sub">goal ≤ 1,950</div>
+    </div>
+  </div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="lbl">Total lost</div>
+      <div class="val" id="totalLost">0 lbs</div>
+      <div class="sub">goal: 35 lbs</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">On track</div>
+      <div class="val" id="onTrack">—</div>
+      <div class="sub">2.9 lbs/week pace</div>
+    </div>
+  </div>
+
+  <div class="section-label">Weekly calories</div>
+  <div class="chart-wrap" style="height:180px;">
+    <canvas id="wkChart" role="img" aria-label="Weekly calorie totals">Weekly calories bar chart</canvas>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('today',this)">
+    <i class="ti ti-sun"></i>Today
+  </button>
+  <button class="nav-btn" onclick="showScreen('weight',this)">
+    <i class="ti ti-scale"></i>Weight
+  </button>
+  <button class="nav-btn" onclick="showScreen('progress',this)">
+    <i class="ti ti-chart-bar"></i>Progress
+  </button>
+</nav>
+
+<!-- MEAL SHEET -->
+<div class="overlay" id="mealOverlay" onclick="overlayClick(event,'mealOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Log a meal</h3>
+    <div class="field">
+      <label>Meal name</label>
+      <input type="text" id="mealName" placeholder="e.g. Chicken + rice" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label>Calories</label>
+      <input type="number" id="mealCal" placeholder="e.g. 480" min="1" max="550" inputmode="numeric"/>
+      <div class="field-err" id="calErr">Must be between 1 and 550 calories</div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeMealSheet()">Cancel</button>
+      <button class="btn-save" onclick="saveMeal()">Save meal</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEIGHT SHEET -->
+<div class="overlay" id="wtOverlay" onclick="overlayClick(event,'wtOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Log weight</h3>
+    <div class="field">
+      <label>Weight (lbs)</label>
+      <input type="number" id="wtInput" placeholder="e.g. 247.5" step="0.1" inputmode="decimal"/>
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="wtDate"/>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeWtSheet()">Cancel</button>
+      <button class="btn-save" onclick="saveWeight()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const TODAY = new Date().toISOString().split('T')[0];
+let wtChartInst = null, wkChartInst = null;
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('calTracker2') || 'null') || {meals:{},weights:[],streak:0,lastLogged:null}; }
+  catch(e) { return {meals:{},weights:[],streak:0,lastLogged:null}; }
+}
+function saveState(s) { localStorage.setItem('calTracker2', JSON.stringify(s)); }
+let S = loadState();
+
+// Date display
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+
+function todayMeals() { return S.meals[TODAY] || []; }
+function totalCalToday() { return todayMeals().reduce((a,m)=>a+m.cal,0); }
+
+function updateRing() {
+  const total = totalCalToday();
+  const pct = Math.min(total/1950, 1);
+  const circ = 452;
+  const ring = document.getElementById('ringFill');
+  ring.setAttribute('stroke-dashoffset', Math.round(circ - pct*circ));
+  ring.setAttribute('stroke', total > 1950 ? '#e24b4a' : 'var(--blue)');
+  document.getElementById('ringCal').textContent = total.toLocaleString();
+  document.getElementById('ringLeft').textContent = Math.max(0,1950-total).toLocaleString() + ' remaining';
+  document.getElementById('mealCount').textContent = todayMeals().length;
+}
+
+function updateNextMeal() {
+  const meals = todayMeals();
+  const el = document.getElementById('nextTime');
+  if (!meals.length) { el.textContent = 'Now'; return; }
+  const last = meals[meals.length-1];
+  const [h,m] = last.time.split(':').map(Number);
+  const next = new Date(); next.setHours(h+3,m,0,0);
+  const now = new Date();
+  if (next <= now) { el.textContent = 'Now'; }
+  else { el.textContent = next.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+}
+
+function renderMeals() {
+  const list = document.getElementById('mealList');
+  const meals = todayMeals();
+  if (!meals.length) { list.innerHTML = '<div class="empty-state"><i class="ti ti-bowl-chopsticks" style="font-size:32px;display:block;margin-bottom:8px"></i>No meals logged yet</div>'; return; }
+  list.innerHTML = meals.map((m,i) => `
+    <div class="meal-card">
+      <div>
+        <div class="meal-name">${escHtml(m.name)}</div>
+        <div class="meal-time">${m.time}</div>
+      </div>
+      <div class="meal-right">
+        <div class="meal-cal">${m.cal}</div>
+        <button class="del-btn" onclick="deleteMeal(${i})" aria-label="Delete"><i class="ti ti-x"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteMeal(i) {
+  S.meals[TODAY].splice(i,1);
+  saveState(S); updateRing(); renderMeals(); updateNextMeal();
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function openMealSheet() {
+  document.getElementById('mealOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mealName').focus(),100);
+}
+function closeMealSheet() {
+  document.getElementById('mealOverlay').classList.remove('open');
+  document.getElementById('mealName').value='';
+  document.getElementById('mealCal').value='';
+  document.getElementById('calErr').style.display='none';
+}
+function saveMeal() {
+  const name = document.getElementById('mealName').value.trim();
+  const cal = parseInt(document.getElementById('mealCal').value);
+  const err = document.getElementById('calErr');
+  if (!name) return;
+  if (!cal || cal<1 || cal>550) { err.style.display='block'; return; }
+  err.style.display='none';
+  if (!S.meals[TODAY]) S.meals[TODAY]=[];
+  const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  S.meals[TODAY].push({name,cal,time});
+  updateStreak();
+  saveState(S); closeMealSheet(); updateRing(); renderMeals(); updateNextMeal();
+}
+
+function updateStreak() {
+  if (S.lastLogged===TODAY) return;
+  const yest = new Date(); yest.setDate(yest.getDate()-1);
+  const yStr = yest.toISOString().split('T')[0];
+  S.streak = S.lastLogged===yStr ? (S.streak||0)+1 : 1;
+  S.lastLogged = TODAY;
+}
+
+function openWtSheet() {
+  document.getElementById('wtDate').value=TODAY;
+  document.getElementById('wtOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('wtInput').focus(),100);
+}
+function closeWtSheet() { document.getElementById('wtOverlay').classList.remove('open'); document.getElementById('wtInput').value=''; }
+function saveWeight() {
+  const wt = parseFloat(document.getElementById('wtInput').value);
+  const dt = document.getElementById('wtDate').value;
+  if (!wt||!dt) return;
+  S.weights = S.weights.filter(w=>w.date!==dt);
+  S.weights.push({date:dt,wt});
+  S.weights.sort((a,b)=>a.date.localeCompare(b.date));
+  saveState(S); closeWtSheet(); renderWeightScreen();
+}
+
+function overlayClick(e,id) { if(e.target.id===id) { id==='mealOverlay'?closeMealSheet():closeWtSheet(); } }
+
+function renderWeightScreen() {
+  const wts = S.weights;
+  const latest = wts.length ? wts[wts.length-1].wt : 250;
+  const lost = Math.max(0, 250-latest);
+  document.getElementById('wtLostLabel').textContent = lost.toFixed(1)+' lbs lost';
+  document.getElementById('wtProgress').style.width = Math.min(lost/35*100,100).toFixed(1)+'%';
+
+  const list = document.getElementById('wtList');
+  if (!wts.length) { list.innerHTML='<div class="empty-state">No weight logged yet</div>'; }
+  else {
+    list.innerHTML = [...wts].reverse().map((w,i,arr)=>{
+      const prev = arr[i+1];
+      let pill = '';
+      if (prev) {
+        const d = w.wt - prev.wt;
+        const cls = d<0?'diff-down':d>0?'diff-up':'diff-same';
+        pill = `<span class="diff-pill ${cls}">${d<0?'':'+'}${d.toFixed(1)}</span>`;
+      }
+      return `<div class="wt-row">
+        <span>${new Date(w.date+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</span>
+        <span style="font-weight:600">${w.wt} lbs</span>
+        ${pill}
+      </div>`;
+    }).join('');
+  }
+
+  if (wtChartInst) { wtChartInst.destroy(); wtChartInst=null; }
+  if (wts.length<2) return;
+  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+  const labels = wts.map(w=>new Date(w.date+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric'}));
+  wtChartInst = new Chart(document.getElementById('wtChart'),{
+    type:'line',
+    data:{labels,datasets:[{data:wts.map(w=>w.wt),borderColor:'#3266ad',backgroundColor:'rgba(50,102,173,0.08)',tension:0.3,pointRadius:4,pointBackgroundColor:'#3266ad',fill:true,label:'Weight'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{min:Math.round(Math.min(...wts.map(w=>w.wt))-3),max:Math.round(Math.max(...wts.map(w=>w.wt))+3),ticks:{color:isDark?'#a0a09a':'#6b6b66',font:{size:11}}},
+              x:{ticks:{color:isDark?'#a0a09a':'#6b6b66',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:6}}}}
+  });
+}
+
+function renderProgress() {
+  document.getElementById('streakNum').textContent = S.streak||0;
+  const wts = S.weights;
+  const lost = wts.length ? Math.max(0,250-wts[wts.length-1].wt) : 0;
+  document.getElementById('totalLost').textContent = lost.toFixed(1)+' lbs';
+
+  const end = new Date('2026-09-01');
+  const daysLeft = Math.max(0,Math.round((end-new Date())/86400000));
+  document.getElementById('weeksLeft').textContent = Math.ceil(daysLeft/7);
+
+  const allDays = Object.keys(S.meals);
+  if (allDays.length) {
+    const avg = Math.round(allDays.map(d=>(S.meals[d]||[]).reduce((a,m)=>a+m.cal,0)).reduce((a,b)=>a+b,0)/allDays.length);
+    document.getElementById('avgCal').textContent = avg.toLocaleString();
+  }
+
+  const start = new Date('2026-06-12');
+  const expectedLoss = (Math.round((new Date()-start)/86400000)/7)*2.9;
+  const el = document.getElementById('onTrack');
+  if (!wts.length) { el.textContent='—'; el.className='val'; }
+  else {
+    const ahead = lost >= expectedLoss*0.8;
+    el.textContent = ahead ? 'Yes' : 'Behind';
+    el.className = 'val '+(ahead?'on-track-yes':'on-track-no');
+  }
+
+  const weeks=[];
+  for(let i=0;i<12;i++){
+    const d=new Date('2026-06-12'); d.setDate(d.getDate()+i*7);
+    let c=0;
+    for(let j=0;j<7;j++){const k=new Date(d.getTime()+j*86400000).toISOString().split('T')[0];c+=(S.meals[k]||[]).reduce((a,m)=>a+m.cal,0);}
+    if(c>0) weeks.push({label:'Wk '+(i+1),cal:c});
+  }
+  if(wkChartInst){wkChartInst.destroy();wkChartInst=null;}
+  if(!weeks.length) return;
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  wkChartInst=new Chart(document.getElementById('wkChart'),{
+    type:'bar',
+    data:{labels:weeks.map(w=>w.label),datasets:[{data:weeks.map(w=>w.cal),backgroundColor:weeks.map(w=>w.cal<=13650?'rgba(50,102,173,0.7)':'rgba(226,75,74,0.7)'),borderRadius:4,label:'Calories'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{color:isDark?'#a0a09a':'#6b6b66',font:{size:11}},grid:{color:'rgba(128,128,128,0.1)'}},x:{ticks:{color:isDark?'#a0a09a':'#6b6b66',font:{size:11}}}}}
+  });
+}
+
+function showScreen(name,btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='weight') renderWeightScreen();
+  if(name==='progress') renderProgress();
+}
+
+// Enter key support
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(document.getElementById('mealOverlay').classList.contains('open')) saveMeal(); if(document.getElementById('wtOverlay').classList.contains('open')) saveWeight(); }});
+
+updateRing(); renderMeals(); updateNextMeal();
+</script>
+</body>
+</html>
