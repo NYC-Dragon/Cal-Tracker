@@ -273,7 +273,14 @@ const API = 'https://api.github.com';
 let wtChartInst=null, wkChartInst=null, foodRowCount=0, timerInterval=null, midnightTimer=null;
 let isSyncing = false;
 
-function getToday(){ return new Date().toISOString().split('T')[0]; }
+// Use LOCAL date always — never UTC, which shifts day at 8pm Eastern
+function getToday(){
+  const d=new Date();
+  const yr=d.getFullYear();
+  const mo=String(d.getMonth()+1).padStart(2,'0');
+  const dy=String(d.getDate()).padStart(2,'0');
+  return yr+'-'+mo+'-'+dy;
+}
 let TODAY = getToday();
 
 // ---- State: data lives here in memory, persisted to GitHub ----
@@ -534,15 +541,18 @@ function saveMeal(){
   const name=rows.length===1?rows[0].name:rows[0].name+' +'+(rows.length-1);
   S.meals[saveDate].push({name,cal:total,items:rows,time,ts});
   updateStreak();
+  if(reminderTimeout){clearTimeout(reminderTimeout);reminderTimeout=null;} // cancel old reminder
   saveToGitHub();
   closeMealSheet();updateRing();renderMeals();updateNextMeal();
 }
 
 function updateStreak(){
-  if(S.lastLogged===TODAY)return;
+  const today=getToday();
+  if(S.lastLogged===today)return;
   const yest=new Date();yest.setDate(yest.getDate()-1);
-  S.streak=S.lastLogged===yest.toISOString().split('T')[0]?(S.streak||0)+1:1;
-  S.lastLogged=TODAY;
+  const yStr=yest.getFullYear()+'-'+String(yest.getMonth()+1).padStart(2,'0')+'-'+String(yest.getDate()).padStart(2,'0');
+  S.streak=S.lastLogged===yStr?(S.streak||0)+1:1;
+  S.lastLogged=today;
 }
 
 // ---- Weight sheet ----
@@ -676,21 +686,50 @@ document.querySelectorAll('.nav-btn[data-screen]').forEach(btn=>{
   btn.addEventListener('click',function(){showScreen(this.dataset.screen);});
 });
 
-// ---- Notification reminder ----
+// ---- Reminder ----
+// iOS Safari does not support web notifications outside of Home Screen PWA installs.
+// Instead we use a visible in-app alert that fires at the right time while the app is open,
+// plus a fallback toast. This is reliable on all browsers.
+let reminderTimeout = null;
+
 async function scheduleReminder(){
   const lastTs=getLastMealTs();
   if(!lastTs)return;
   const fireAt=lastTs+3*60*60*1000;
-  if(fireAt<=Date.now())return;
-  if(!('Notification' in window)){showToast('Notifications not supported');return;}
-  let perm=Notification.permission;
-  if(perm==='default')perm=await Notification.requestPermission();
-  if(perm==='denied'){showToast('Notifications blocked — enable in Settings > Safari');return;}
-  const delay=fireAt-Date.now();
+  const msLeft=fireAt-Date.now();
+  if(msLeft<=0)return;
+
+  // Clear any previous reminder
+  if(reminderTimeout) clearTimeout(reminderTimeout);
+
   const readyAt=new Date(fireAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  setTimeout(()=>{ new Notification('Time to eat 🍽️',{body:'Your 3-hour window is up — next meal is ready.',tag:'meal-ready'}); },delay);
+
+  // Try native notification first (works on Android, desktop, and iOS Home Screen PWA)
+  let nativeOk=false;
+  if('Notification' in window && Notification.permission!=='denied'){
+    if(Notification.permission==='default') await Notification.requestPermission();
+    if(Notification.permission==='granted'){
+      reminderTimeout=setTimeout(()=>{
+        new Notification('Time to eat 🍽️',{body:'3-hour window is up — next meal is ready.',tag:'meal-ready'});
+      }, msLeft);
+      nativeOk=true;
+    }
+  }
+
+  // Always also schedule an in-app alert as fallback (works even when app is open in Safari)
+  reminderTimeout=setTimeout(()=>{
+    // Only show alert if page is visible
+    if(!document.hidden){
+      showToast('🍽️ Time to eat — 3hrs is up!');
+      // Also flash the timer card green
+      const card=document.getElementById('timerCard');
+      card.style.background='var(--green-bg)';
+      setTimeout(()=>card.style.background='',3000);
+    }
+  }, msLeft);
+
   document.getElementById('notifHint').textContent='🔔 reminder set for '+readyAt;
-  showToast('Reminder set for '+readyAt);
+  showToast(nativeOk ? 'Reminder set for '+readyAt : 'In-app reminder set for '+readyAt+' (keep app open)');
 }
 
 // ---- Toast ----
