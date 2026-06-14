@@ -60,16 +60,20 @@
     ],
     "2026-06-14": [
       {
-        "name": "Double butter burger ketchup",
-        "cal": 550,
+        "name": "Milk +1",
+        "cal": 542,
         "items": [
           {
-            "name": "Double butter burger ketchup",
-            "cal": 550
+            "name": "Milk",
+            "cal": 240
+          },
+          {
+            "name": "Choc",
+            "cal": 302
           }
         ],
-        "time": "08:16 PM",
-        "ts": 1781399792977
+        "time": "07:48 AM",
+        "ts": 1781441325475
       }
     ]
   },
@@ -79,6 +83,6 @@
       "wt": 260
     }
   ],
-  "streak": 1,
-  "lastLogged": "2026-06-13"
+  "streak": 2,
+  "lastLogged": "2026-06-14"
 }
