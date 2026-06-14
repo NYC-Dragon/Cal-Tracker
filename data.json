@@ -60,26 +60,6 @@
     ],
     "2026-06-14": [
       {
-        "name": "Milk +2",
-        "cal": 185,
-        "items": [
-          {
-            "name": "Milk",
-            "cal": 90
-          },
-          {
-            "name": "Brown sugar",
-            "cal": 38
-          },
-          {
-            "name": "Morin vanilla",
-            "cal": 57
-          }
-        ],
-        "time": "08:16 PM",
-        "ts": 1781399788639
-      },
-      {
         "name": "Double butter burger ketchup",
         "cal": 550,
         "items": [
