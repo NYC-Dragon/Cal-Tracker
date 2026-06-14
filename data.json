@@ -74,6 +74,30 @@
         ],
         "time": "07:48 AM",
         "ts": 1781441325475
+      },
+      {
+        "name": "Milk +3",
+        "cal": 505,
+        "items": [
+          {
+            "name": "Milk",
+            "cal": 90
+          },
+          {
+            "name": "Brown sugar",
+            "cal": 38
+          },
+          {
+            "name": "Morin vanilla",
+            "cal": 57
+          },
+          {
+            "name": "Dunker",
+            "cal": 320
+          }
+        ],
+        "time": "10:48 AM",
+        "ts": 1781452134860
       }
     ]
   },
