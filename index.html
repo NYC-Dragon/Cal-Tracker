@@ -199,6 +199,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <button class="btn-full" id="btnSetToken"><i class="ti ti-key"></i> Set GitHub Token</button>
   <button class="btn-full secondary" id="btnSyncNow"><i class="ti ti-refresh"></i> Sync now</button>
+  <button class="btn-full secondary" id="btnFixDates" style="color:var(--amber);border-color:var(--amber)"><i class="ti ti-calendar-event"></i> Fix meals logged to wrong day</button>
   <button class="btn-full secondary" id="btnClearToken" style="color:var(--red);border-color:var(--red)"><i class="ti ti-trash"></i> Remove token</button>
 </div>
 
@@ -757,6 +758,21 @@ document.getElementById('btnSetToken').addEventListener('click',openTokenSheet);
 document.getElementById('btnCancelToken').addEventListener('click',closeTokenSheet);
 document.getElementById('btnSaveToken').addEventListener('click',saveToken);
 document.getElementById('btnSyncNow').addEventListener('click',syncNow);
+document.getElementById('btnFixDates').addEventListener('click',()=>{
+  const today = getToday();
+  // Find any future-dated keys (UTC bug caused meals to land on tomorrow's date)
+  const futureDays = Object.keys(S.meals).filter(d => d > today);
+  if(!futureDays.length){ showToast('No meals to fix — all good!'); return; }
+  futureDays.forEach(d=>{
+    if(!S.meals[today]) S.meals[today]=[];
+    S.meals[today] = S.meals[today].concat(S.meals[d]);
+    delete S.meals[d];
+  });
+  saveToGitHub();
+  updateRing(); renderMeals(); updateNextMeal();
+  showScreen('today');
+  showToast('Meals moved back to today ✓');
+});
 document.getElementById('btnClearToken').addEventListener('click',()=>{
   clearToken();S={meals:{},weights:[],streak:0,lastLogged:null};
   updateRing();renderMeals();updateNextMeal();
