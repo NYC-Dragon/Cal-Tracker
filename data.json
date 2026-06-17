@@ -227,6 +227,32 @@
         "time": "04:57 PM",
         "ts": 1781647056716
       }
+    ],
+    "2026-06-17": [
+      {
+        "name": "Milk +3",
+        "cal": 435,
+        "items": [
+          {
+            "name": "Milk",
+            "cal": 90
+          },
+          {
+            "name": "Brown sugar",
+            "cal": 38
+          },
+          {
+            "name": "Morin vanilla",
+            "cal": 57
+          },
+          {
+            "name": "Cliff",
+            "cal": 250
+          }
+        ],
+        "time": "08:04 AM",
+        "ts": 1781701471278
+      }
     ]
   },
   "weights": [
@@ -243,6 +269,6 @@
       "wt": 253
     }
   ],
-  "streak": 4,
-  "lastLogged": "2026-06-16"
+  "streak": 5,
+  "lastLogged": "2026-06-17"
 }
