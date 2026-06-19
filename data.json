@@ -364,6 +364,26 @@
         ],
         "time": "11:50 AM",
         "ts": 1781887855814
+      },
+      {
+        "name": "Milk +2",
+        "cal": 370,
+        "items": [
+          {
+            "name": "Milk",
+            "cal": 180
+          },
+          {
+            "name": "Brown sugar",
+            "cal": 76
+          },
+          {
+            "name": "Morin vanilla",
+            "cal": 114
+          }
+        ],
+        "time": "03:10 PM",
+        "ts": 1781899809260
       }
     ]
   },
