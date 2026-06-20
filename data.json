@@ -386,32 +386,7 @@
         "ts": 1781899809260
       }
     ],
-    "2026-06-20": [
-      {
-        "name": "3/4 cup Milk +3",
-        "cal": 435,
-        "items": [
-          {
-            "name": "3/4 cup Milk",
-            "cal": 90
-          },
-          {
-            "name": "10g Brown sugar",
-            "cal": 38
-          },
-          {
-            "name": "17g Morin vanilla",
-            "cal": 57
-          },
-          {
-            "name": "Cliff",
-            "cal": 250
-          }
-        ],
-        "time": "07:24 AM",
-        "ts": 1781958282777
-      }
-    ]
+    "2026-06-20": []
   },
   "weights": [
     {
